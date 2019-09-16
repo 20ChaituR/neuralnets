@@ -66,21 +66,48 @@ public class NeuralNet {
    }
 
    /**
-    * Constructor that creates a neural net with all the weights given. The weights are given in a
-    * file, which is then read and put into the weights array. From that, number of layers and size
-    * of each layer is determined.
+    * Constructor that creates a neural net with all the weights given. The format for the weights
+    * is as follows: first, the size of each layer is given. Then, for each layer, the matrix for
+    * the weights is given. This matrix is such that the number of rows is the number of nodes in
+    * the previous activation layer, and the number of columns is the number of nodes in the next
+    * activation layer. Each column is space separated and each row is on the next line. There is
+    * a blank line between each layer and this format is repeated for each layer.
+    *
+    * An example of a weights file would be:
+    * 2 2 1
+    *
+    * 0.5 0.5
+    * 0.5 0.5
+    *
+    * 0.3
+    * 0.3
+    *
+    * Here, there are two connectivity layers, shown by the two matrices. The first layer connects
+    * two nodes to two nodes, and the second layer connects two nodes to one node.
     *
     * @param filename the name of the file that the weights are stored in
     */
    public NeuralNet(String filename) throws IOException {
-      getWeights(filename);
+      BufferedReader br = new BufferedReader(new FileReader(filename));
+      String[] splitLine = br.readLine().split(" ");
 
-      numOfLayers = weights.size();
-      sizeOfLayers = new int[weights.size() + 1];
-      for (int i = 0; i < numOfLayers; i++) {
-         sizeOfLayers[i] = weights.get(i).length;
+      numOfLayers = splitLine.length - 1;
+      sizeOfLayers = new int[splitLine.length];
+      for (int i = 0; i < splitLine.length; i++) {
+         sizeOfLayers[i] = Integer.parseInt(splitLine[i]);
       }
-      sizeOfLayers[numOfLayers] = weights.get(numOfLayers - 1)[0].length;
+
+      weights = new ArrayList<>(numOfLayers);
+      for (int n = 0; n < numOfLayers; n++) {
+         weights.add(new double[sizeOfLayers[n]][sizeOfLayers[n + 1]]);
+         br.readLine();
+         for (int i = 0; i < sizeOfLayers[n]; i++) {
+            StringTokenizer st = new StringTokenizer(br.readLine());
+            for (int j = 0; j < sizeOfLayers[n + 1]; j++) {
+               weights.get(n)[i][j] = Double.parseDouble(st.nextToken());
+            }
+         }
+      }
    }
 
    /**
@@ -109,14 +136,11 @@ public class NeuralNet {
     * the next activation layer. Each column is space separated and each row is on the next line.
     * There is a blank line between each layer and this format is repeated for each layer.
     *
-    * An example of a weights file would be:
-    * 2 2 1
+    * An example of a weights file would be: 2 2 1
     *
-    * 0.5 0.5
-    * 0.5 0.5
+    * 0.5 0.5 0.5 0.5
     *
-    * 0.3
-    * 0.3
+    * 0.3 0.3
     *
     * Here, there are two connectivity layers, shown by the two matrices. The first layer connects
     * two nodes to two nodes, and the second layer connects two nodes to one node.
@@ -143,31 +167,7 @@ public class NeuralNet {
                weights.get(n)[i][j] = Double.parseDouble(st.nextToken());
             }
          }
-
       }
-      String line = br.readLine();
-
-//      weights = new ArrayList<>();
-//
-//      String line = br.readLine();
-//      while (line != null) {
-//         int numRows = Integer.parseInt(line.split(" ")[0]);
-//         int numCols = Integer.parseInt(line.split(" ")[1]);
-//
-//         double[][] layer = new double[numRows][numCols];
-//         for (int i = 0; i < numRows; i++) {
-//            line = br.readLine();
-//            StringTokenizer st = new StringTokenizer(line);
-//            for (int j = 0; j < numCols; j++) {
-//               layer[i][j] = Double.parseDouble(st.nextToken());
-//            }
-//         }
-//
-//         weights.add(layer);
-//
-//         br.readLine();
-//         line = br.readLine();
-//      }
    }
 
    /**
@@ -178,6 +178,7 @@ public class NeuralNet {
     * @param filename the name of the file to store the weights in
     */
    public void storeWeights(String filename) throws IOException {
+
       PrintWriter pw = new PrintWriter(new FileWriter(filename));
       for (int n = 0; n < weights.size(); n++) {
          pw.println(weights.get(n).length + " " + weights.get(n)[0].length);
