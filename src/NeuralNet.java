@@ -14,6 +14,11 @@ import java.util.StringTokenizer;
  * activation layers and number of activations per layer. The connectivity pattern is such that
  * every adjacent layer is fully connected.
  *
+ * This neural network can be constructed by either passing a file which contains the full weights
+ * matrix, or by passing the size of each layer, which will then construct the weights matrix with
+ * random values. In addition, these weights can be stored into a file. The network is run by
+ * calling the propagate function, which calculates the output of the network from the given input.
+ *
  * @author Chaitanya Ravuri
  * @version September 4, 2019
  */
@@ -98,17 +103,18 @@ public class NeuralNet {
 
    /**
     * Gets the weights for each connectivity layer from the file given by the filename. The format
-    * for the weights is as follows: first the size of the weights matrix for one layer is given in
-    * one line, space-separated. Then each value of the weights matrix is given such that each line
-    * is a row of the matrix and each row is space-separated. Then, on the next line, this same
-    * structure is repeated for each consecutive layer.
+    * for the weights is as follows: first, the size of each layer is given. Then, for each layer,
+    * the matrix for the weights is given. This matrix is such that the number of rows is the number
+    * of nodes in the previous activation layer, and the number of columns is the number of nodes in
+    * the next activation layer. Each column is space separated and each row is on the next line.
+    * There is a blank line between each layer and this format is repeated for each layer.
     *
     * An example of a weights file would be:
-    * 2 2
+    * 2 2 1
+    *
     * 0.5 0.5
     * 0.5 0.5
     *
-    * 2 1
     * 0.3
     * 0.3
     *
@@ -118,28 +124,50 @@ public class NeuralNet {
     * @param filename the name of the file that the weights are stored in
     */
    private void getWeights(String filename) throws IOException {
-      weights = new ArrayList<>();
-
       BufferedReader br = new BufferedReader(new FileReader(filename));
-      String line = br.readLine();
-      while (line != null) {
-         int numRows = Integer.parseInt(line.split(" ")[0]);
-         int numCols = Integer.parseInt(line.split(" ")[1]);
+      String[] splitLine = br.readLine().split(" ");
 
-         double[][] layer = new double[numRows][numCols];
-         for (int i = 0; i < numRows; i++) {
-            line = br.readLine();
-            StringTokenizer st = new StringTokenizer(line);
-            for (int j = 0; j < numCols; j++) {
-               layer[i][j] = Double.parseDouble(st.nextToken());
+      numOfLayers = splitLine.length - 1;
+      sizeOfLayers = new int[splitLine.length];
+      for (int i = 0; i < splitLine.length; i++) {
+         sizeOfLayers[i] = Integer.parseInt(splitLine[i]);
+      }
+
+      weights = new ArrayList<>(numOfLayers);
+      for (int n = 0; n < numOfLayers; n++) {
+         weights.add(new double[sizeOfLayers[n]][sizeOfLayers[n + 1]]);
+         br.readLine();
+         for (int i = 0; i < sizeOfLayers[n]; i++) {
+            StringTokenizer st = new StringTokenizer(br.readLine());
+            for (int j = 0; j < sizeOfLayers[n + 1]; j++) {
+               weights.get(n)[i][j] = Double.parseDouble(st.nextToken());
             }
          }
 
-         weights.add(layer);
-
-         br.readLine();
-         line = br.readLine();
       }
+      String line = br.readLine();
+
+//      weights = new ArrayList<>();
+//
+//      String line = br.readLine();
+//      while (line != null) {
+//         int numRows = Integer.parseInt(line.split(" ")[0]);
+//         int numCols = Integer.parseInt(line.split(" ")[1]);
+//
+//         double[][] layer = new double[numRows][numCols];
+//         for (int i = 0; i < numRows; i++) {
+//            line = br.readLine();
+//            StringTokenizer st = new StringTokenizer(line);
+//            for (int j = 0; j < numCols; j++) {
+//               layer[i][j] = Double.parseDouble(st.nextToken());
+//            }
+//         }
+//
+//         weights.add(layer);
+//
+//         br.readLine();
+//         line = br.readLine();
+//      }
    }
 
    /**
@@ -191,6 +219,13 @@ public class NeuralNet {
       return curLayer;
    }
 
+   /**
+    * This is the function used to calculate the output of each activation node. Currently, it is
+    * just an identity function.
+    *
+    * @param x the input for the node
+    * @return the function applied to the input
+    */
    private double outputFunction(double x) {
       return x;
    }

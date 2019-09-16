@@ -1,4 +1,4 @@
-To run this neural network, run Main.java and provide a filename to input the weights from. 
+To run this neural network, run Main.java. The Neural Network will read the weights from the file "weights.txt". The program will ask for the input values, which are given space-separated in standard input.
 
 **Structure of the Weights File:**
 
