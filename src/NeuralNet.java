@@ -191,75 +191,8 @@ public class NeuralNet {
       return curLayer;
    }
 
-   public void train(ArrayList<ArrayList<double[]>> trainingData, ArrayList<ArrayList<double[]>> testData,
-                     double learningRate, int epochs) {
-      for (int e = 1; e <= epochs; e++) {
-         for (int t = 0; t < trainingData.get(0).size(); t++) {
-            ArrayList<double[][]> deltaWeights = backPropagate(trainingData.get(0).get(t), trainingData.get(1).get(t));
-            for (int n = 0; n < numOfLayers; n++) {
-               for (int i = 0; i < sizeOfLayers[n]; i++) {
-                  for (int j = 0; j < sizeOfLayers[n + 1]; j++) {
-                     weights.get(n)[i][j] += learningRate * deltaWeights.get(n)[i][j];
-                  }
-               }
-            }
-         }
-
-         if (e % (epochs / 20) == 0) {
-            double error = 0;
-            for (int t = 0; t < testData.get(0).size(); t++) {
-               double[] output = propagate(testData.get(0).get(t));
-               double singleError = 0;
-               for (int i = 0; i < output.length; i++) {
-                  singleError += (testData.get(1).get(t)[i] - output[i]) * (testData.get(1).get(t)[i] - output[i]);
-               }
-               error += 0.5 * singleError * singleError;
-            }
-            System.out.println("Epoch " + e + ": Error = " + Math.sqrt(error));
-         }
-      }
-   }
-
-   // E = 0.5 * (T - F) ^ 2
-   private ArrayList<double[][]> backPropagate(double[] input, double[] expected) {
-      double[] output = propagate(input);
-      double[] delta = new double[output.length];
-      for (int i = 0; i < delta.length; i++) {
-         delta[i] = expected[i] - output[i];
-      }
-
-      ArrayList<double[][]> deltaWeights = new ArrayList<>();
-      for (int n = 0; n < numOfLayers; n++) {
-         deltaWeights.add(new double[sizeOfLayers[n]][sizeOfLayers[n + 1]]);
-      }
-
-      for (int n = numOfLayers - 1; n >= 0; n--) {
-         for (int i = 0; i < sizeOfLayers[n]; i++) {
-            for (int j = 0; j < sizeOfLayers[n + 1]; j++) {
-               deltaWeights.get(n)[i][j] = delta[j] * outputFunctionPrime(activations.get(n + 1)[j]) * activations.get(n)[i];
-            }
-         }
-
-         double[] newDelta = new double[sizeOfLayers[n]];
-         for (int i = 0; i < sizeOfLayers[n]; i++) {
-            for (int j = 0; j < sizeOfLayers[n + 1]; j++) {
-               newDelta[i] += delta[j] * weights.get(n)[i][j];
-            }
-         }
-         delta = newDelta;
-      }
-
-      return deltaWeights;
-   }
-
    private double outputFunction(double x) {
-//      return 1 / (1 + Math.exp(-x));
       return x;
-   }
-
-   private double outputFunctionPrime(double x) {
-//      return outputFunction(x) * (1 - outputFunction(x));
-      return 1;
    }
 
 }
