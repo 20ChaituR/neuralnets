@@ -1,24 +1,51 @@
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Scanner;
 
 /**
  * Driver for Neural Network class.
  *
- * Specify the actual neural network in the weights file, "weights.txt". This program can run a
- * neural network with any number of layers and any number of nodes per layer.
+ * Specify the actual neural network in the weights file, "weights.txt", and specify the training
+ * data in "trainingData.txt". This program can run a neural network with any number of layers and
+ * any number of nodes per layer.
  *
  * @author Chaitanya Ravuri
  * @version September 4, 2019
  */
 public class Main {
 
-   // "weights.txt" is assumed to be in the same directory as this program
+   // the input files are assumed to be in the same directory as this program
    private static final String WEIGHTS_FILE = "weights.txt";
    private static final String TRAINING_FILE = "trainingData.txt";
 
-   private static double[][][] getTrainingData(String filename) {
-      Scanner sc = new Scanner(filename);
+   /**
+    * This function reads the training data from a given file, then returns a matrix containing it.
+    * This matrix is indexed as trainingData[n][type][i], where n is the test case, type is either 0
+    * or 1, 0 for input and 1 for output, and i is the index of the input/output value.
+    *
+    * The format of the training data is as follows: On the first line, the number of test cases,
+    * number of input nodes, number of output nodes are given. Then, on the following lines, for
+    * each test case, first the input values are given, space-separated, then the expected output
+    * values are given space-separated.
+    *
+    * An example of a training data file is:
+    *
+    *    3 2 1
+    *    0 0
+    *    0
+    *    0 1
+    *    1
+    *    1 0
+    *    1
+    *
+    * In this case, there are 3 test cases, each with 2 input nodes and 1 output node.
+    *
+    * @param filename the file to read the training data from
+    * @return the matrix of training data
+    */
+   private static double[][][] getTrainingData(String filename) throws FileNotFoundException {
+      Scanner sc = new Scanner(new FileReader(filename));
 
       int sizeOfData = sc.nextInt();
       int sizeOfInput = sc.nextInt();
@@ -48,31 +75,15 @@ public class Main {
 
       System.out.println("Is this a Boolean (2 Inputs, 1 Output) Neural Network? (y/n)");
 
-//      String ans = sc.next();
-      String ans = "y";
+      String ans = sc.next();
+//      String ans = "y";
       if (ans.charAt(0) == 'y') {
          // The program runs the neural net on all of the possible boolean inputs
-         ArrayList<double[]> inputs = new ArrayList<>();
-         ArrayList<double[]> expected = new ArrayList<>();
-
-         inputs.add(new double[] {0, 0});
-         expected.add(new double[] {0});
-         inputs.add(new double[] {0, 1});
-         expected.add(new double[] {1});
-         inputs.add(new double[] {1, 0});
-         expected.add(new double[] {1});
-         inputs.add(new double[] {1, 1});
-         expected.add(new double[] {0});
-
-//         ArrayList<ArrayList<double[]>> trainingData = new ArrayList<>();
-//         trainingData.add(inputs);
-//         trainingData.add(expected);
-
          double[][][] trainingData = getTrainingData(TRAINING_FILE);
 
-         int[] layers = new int[] {2, 2, 1};
+         int[] layers = new int[]{2, 2, 1};
          NeuralNet nn = new NeuralNet(layers);
-         nn.train(trainingData, trainingData,0.01, 100000);
+         nn.train(trainingData, trainingData, 0.01, 100000);
 
          System.out.println("In: Out");
          System.out.println("00: " + nn.propagate(new double[]{0, 0})[0]);

@@ -10,9 +10,9 @@ import java.util.StringTokenizer;
 /**
  * Neural Network
  *
- * This class allows one to construct a simply-connected neural network with a variable number of
- * activation layers and number of activations per layer. The connectivity pattern is such that
- * every adjacent layer is fully connected.
+ * This class allows one to construct a neural network with a variable number of activation layers
+ * and number of activations per layer. The connectivity pattern is such that every adjacent layer
+ * is fully connected.
  *
  * This neural network can be constructed by either passing a file which contains the full weights
  * matrix, or by passing the size of each layer, which will then construct the weights matrix with
@@ -23,6 +23,8 @@ import java.util.StringTokenizer;
  * @version September 4, 2019
  */
 public class NeuralNet {
+
+   private final boolean DEBUG = false;
 
    private int[] sizeOfLayers;                     // number of units in each activation layer
    private int numOfLayers;                        // number of connectivity layers
@@ -73,11 +75,15 @@ public class NeuralNet {
     * activation layer. Each column is space separated and each row is on the next line. There is a
     * blank line between each layer and this format is repeated for each layer.
     *
-    * An example of a weights file would be: 2 2 1
+    * An example of a weights file would be:
     *
-    * 0.5 0.5 0.5 0.5
+    *    2 2 1
     *
-    * 0.3 0.3
+    *    0.5 0.5
+    *    0.5 0.5
+    *
+    *    0.3
+    *    0.3
     *
     * Here, there are two connectivity layers, shown by the two matrices. The first layer connects
     * two nodes to two nodes, and the second layer connects two nodes to one node.
@@ -175,9 +181,12 @@ public class NeuralNet {
          // calculates the next layer by multiplying the weights by the current layer
          double[] nextLayer = new double[sizeOfLayers[n + 1]];
          for (int i = 0; i < sizeOfLayers[n + 1]; i++) {
+            if (DEBUG) System.out.print("DEBUG: a[" + (n+1) + "][" + i + "] = f(");
             for (int j = 0; j < sizeOfLayers[n]; j++) {
                nextLayer[i] += weights.get(n)[j][i] * curLayer[j];
+               if (DEBUG) System.out.print("a[" + n + "][" + j + "]*w[" + n + "][" + j + "][" + i + "] + ");
             }
+            if (DEBUG) System.out.println(")");
             // applies the output function to the nodes
             nextLayer[i] = outputFunction(nextLayer[i]);
          }
@@ -189,13 +198,26 @@ public class NeuralNet {
       return curLayer;
    }
 
-   public void train(ArrayList<ArrayList<double[]>> trainingData, ArrayList<ArrayList<double[]>> testData,
-                     double learningRate, int epochs) {
+   /**
+    * Trains the neural network with the given training data and calculates the error with the test
+    * data. The learning rate of the network starts at the given learning rate, and increases or
+    * decreases depending on the error. Training runs for a given number of epochs or until the
+    * learning rate goes to 0.
+    *
+    * @param trainingData the data that is used to train the network
+    * @param testData     the data that is used to calculate the error for the network
+    * @param learningRate the initial learning rate of the network
+    * @param epochs       the number of epochs that training will run for
+    */
+   public void train(double[][][] trainingData, double[][][] testData, double learningRate, int epochs) {
       double minError = -1;
 
       for (int e = 1; e <= epochs && learningRate != 0; e++) {
-         for (int t = 0; t < trainingData.get(0).size(); t++) {
-            ArrayList<double[][]> deltaWeights = getDeltaWeights(trainingData.get(0).get(t), trainingData.get(1).get(t));
+         for (double[][] trainingCase : trainingData) {
+            // Get the change in weights for the training case
+            ArrayList<double[][]> deltaWeights = getDeltaWeights(trainingCase[0], trainingCase[1]);
+
+            // Add the change in weights times the learning rate to each weight
             for (int n = 0; n < numOfLayers; n++) {
                for (int i = 0; i < sizeOfLayers[n]; i++) {
                   for (int j = 0; j < sizeOfLayers[n + 1]; j++) {
@@ -205,30 +227,40 @@ public class NeuralNet {
             }
          }
 
+         // Calculate the error using the test data
          double curError = 0;
-         for (int t = 0; t < testData.get(0).size(); t++) {
-            double[] output = propagate(testData.get(0).get(t));
+         for (double[][] testCase : testData) {
+            double[] output = propagate(testCase[0]);
             double singleError = 0;
             for (int i = 0; i < output.length; i++) {
-               singleError += (testData.get(1).get(t)[i] - output[i]) * (testData.get(1).get(t)[i] - output[i]);
+               singleError += (testCase[1][i] - output[i]) * (testCase[1][i] - output[i]);
             }
             curError += 0.5 * 0.5 * singleError * singleError;
          }
 
+         // Change the learning rate depending on if the error is decreasing or increasing
          if (minError != -1 && curError < minError) {
             learningRate *= 2.0;
          } else if (minError != -1 && curError > minError) {
             learningRate /= 2.0;
          }
-
          minError = Math.min(minError, curError);
 
+         // Print the current error twenty times
          if (e % (epochs / 20) == 0) {
             System.out.println("Epoch " + e + ": Error = " + Math.sqrt(curError));
          }
       }
    }
 
+   /**
+    * Finds the gradient of the error function with respect to each weight, for a given test case.
+    * This function assumes the network has two inputs, one hidden layer, and one output.
+    *
+    * @param input    the input test case to train the network on
+    * @param expected the expected output for that test case
+    * @return the amount each weight needs to change
+    */
    private ArrayList<double[][]> getDeltaWeights(double[] input, double[] expected) {
       double[] output = propagate(input);
 
@@ -238,7 +270,7 @@ public class NeuralNet {
       }
 
       for (int j = 0; j < sizeOfLayers[1]; j++) {
-         deltaWeights.get(1)[j][0] = (expected[0] - output[0]) * outputFunctionPrime(activations.get(2)[0]) *
+         deltaWeights.get(1)[j][0] = (expected[0] - output[0]) * outputFunctionPrime(activations.get(2)[0] * (1 - activations.get(2)[0])) *
                  activations.get(1)[j];
       }
 
@@ -250,6 +282,28 @@ public class NeuralNet {
       }
 
       return deltaWeights;
+   }
+
+   /**
+    * This is the function used to calculate the output of each activation node.
+    *
+    * @param x the input for the node
+    * @return the function applied to the input
+    */
+   private double outputFunction(double x) {
+      return x;
+//      return 1 / (1 + Math.exp(-x));
+   }
+
+   /**
+    * This returns the derivative of the output function of each activation node evaluated at x.
+    *
+    * @param x the input for the node
+    * @return the derivative of the output function
+    */
+   private double outputFunctionPrime(double x) {
+      return 1.0;
+//      return outputFunction(x) * (1 - outputFunction(x));
    }
 
    // E = 0.5 * (T - F) ^ 2
@@ -283,28 +337,6 @@ public class NeuralNet {
       }
 
       return deltaWeights;
-   }
-
-   /**
-    * This is the function used to calculate the output of each activation node.
-    *
-    * @param x the input for the node
-    * @return the function applied to the input
-    */
-   private double outputFunction(double x) {
-//      return x;
-      return 1 / (1 + Math.exp(-x));
-   }
-
-   /**
-    * This returns the derivative of the output function of each activation node evaluated at x.
-    *
-    * @param x the input for the node
-    * @return the derivative of the output function
-    */
-   private double outputFunctionPrime(double x) {
-//      return 1.0;
-      return outputFunction(x) * (1 - outputFunction(x));
    }
 
 }

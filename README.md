@@ -2,7 +2,10 @@ To run this neural network, run Main.java. The Neural Network will read the weig
 "weights.txt". The program will ask for the input values, which should be space-separated and given in 
 standard input.
 
-**Structure of the Weights File:**
+You can choose whether or not the network is a Boolean Neural Network. If it is, the network can be 
+trained using the data in "trainingData.txt".
+
+## Structure of the Weights File
 
 The format for the weights is as follows: first, the size of each layer is given. Then, for each 
 layer, the matrix for the weights is given. This matrix is such that the number of rows is the 
@@ -22,3 +25,22 @@ An example of a weights file would be:
    
 Here, there are two connectivity layers, shown by the two matrices. The first layer connects
 two nodes to two nodes, and the second layer connects two nodes to one node.
+
+## Structure of the Training Data File
+
+The format of the training data is as follows: On the first line, the number of test cases,
+number of input nodes, number of output nodes are given. Then, on the following lines, for
+each test case, first the input values are given, space-separated, then the expected output
+values are given space-separated.
+
+An example of a training data file is:
+
+    3 2 1
+    0 0
+    0
+    0 1
+    1
+    1 0
+    1
+    
+In this case, there are 3 test cases, each with 2 input nodes and 1 output node.
