@@ -270,7 +270,7 @@ public class NeuralNet {
       }
 
       for (int j = 0; j < sizeOfLayers[1]; j++) {
-         deltaWeights.get(1)[j][0] = (expected[0] - output[0]) * outputFunctionPrime(activations.get(2)[0] * (1 - activations.get(2)[0])) *
+         deltaWeights.get(1)[j][0] = (expected[0] - output[0]) * outputFunctionPrime(activations.get(2)[0]) *
                  activations.get(1)[j];
       }
 
