@@ -1,4 +1,8 @@
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Random;
 import java.util.StringTokenizer;
 
@@ -22,6 +26,8 @@ public class NeuralNet
 
    private final boolean DEBUG = false;
 
+   private final double LAMBDA_MULT = 2.0;
+
    private int[] sizeOfLayers;            // number of units in each activation layer
    private int numOfLayers;               // number of connectivity layers
 
@@ -41,17 +47,6 @@ public class NeuralNet
       this.sizeOfLayers = sizeOfLayers;
       numOfLayers = sizeOfLayers.length - 1;
 
-      generateWeights();
-      createActivations();
-   }
-
-   /**
-    * Given the size of each layer and the number of connectivity layers, generates random weights
-    * that connect all nodes in each adjacent layer. Weights are randomized using a Gaussian
-    * distribution with mean 0 and standard deviation 1.
-    */
-   public void generateWeights()
-   {
       weights = new double[numOfLayers][][];
       for (int n = 0; n < numOfLayers; n++)
       {
@@ -66,6 +61,8 @@ public class NeuralNet
             }
          }
       }
+
+      createActivations();
    }
 
    /**
@@ -237,179 +234,91 @@ public class NeuralNet
     * decreases depending on the error. Training runs for a given number of epochs or until the
     * learning rate goes to 0.
     *
-    * @param trainingData the inputs and outputs for each training case, used to train the network
+    * @param trainingData the data that is used to train the network
+    * @param testData     the data that is used to calculate the error for the network
     * @param learningRate the initial learning rate of the network
-    * @param lambdaMult   how much to multiply the learning rate by for each iteration
     * @param epochs       the number of epochs that training will run for
-    * @param printingRate how many times to print the error
     */
-   public void train(double[][][] trainingData, double learningRate, double lambdaMult, int epochs, int printingRate)
+   public void train(double[][][] trainingData, double[][][] testData, double learningRate, int epochs)
    {
       double minError = -1;
 
-      int e = 1;
-      while (e <= epochs && learningRate != 0)
+      for (int e = 1; e <= epochs && learningRate != 0; e++)
       {
          for (double[][] trainingCase : trainingData)
          {
-            // Find how much the weights need to change for each training case
-            double[][][] deltaWeights = getDeltaWeightsMultipleOutputs(trainingCase[0], trainingCase[1]);
-            for (int n = 0; n < numOfLayers; n++)
-            {
-               for (int i = 0; i < sizeOfLayers[n]; i++)
-               {
-                  for (int j = 0; j < sizeOfLayers[n + 1]; j++)
-                  {
-                     weights[n][i][j] += deltaWeights[n][i][j];
-                  }
-               }
-            }
-
-            // Calculate the error using the training data
-            double curError = calculateError(trainingData);
-
-            // Change the learning rate depending on if the error is decreasing or increasing
-            if (minError != -1 && curError < minError)
-            {
-               learningRate *= lambdaMult;
-               minError = curError;
-            }
-            else if (minError != -1 && curError >= minError)
-            {
-               for (int n = 0; n < numOfLayers; n++)
-               {
-                  for (int i = 0; i < sizeOfLayers[n]; i++)
-                  {
-                     for (int j = 0; j < sizeOfLayers[n + 1]; j++)
-                     {
-                        weights[n][i][j] -= learningRate * deltaWeights[n][i][j];
-                     }
-                  }
-               }
-               learningRate /= lambdaMult;
-            }
-            else
-            {
-               minError = curError;
-            }
+            // Update the weights for each training case
+            updateWeights(trainingCase[0], trainingCase[1], learningRate);
          }
 
-         // Print the current error
-         if (printingRate > 0 && e % (epochs / printingRate) == 0)
+         // Calculate the error using the test data
+         double curError = 0;
+         for (double[][] testCase : testData)
          {
-            System.out.println("Epoch " + e + ": Error = " + Math.sqrt(minError));
+            double[] output = propagate(testCase[0]);
+            double singleError = 0;
+            for (int i = 0; i < output.length; i++)
+            {
+               singleError += (testCase[1][i] - output[i]) * (testCase[1][i] - output[i]);
+            }
+            curError += 0.5 * 0.5 * singleError * singleError;
          }
 
-         e++;
+         // Change the learning rate depending on if the error is decreasing or increasing
+         if (minError != -1 && curError < minError)
+         {
+            learningRate *= LAMBDA_MULT;
+         }
+         else if (minError != -1 && curError > minError)
+         {
+            learningRate /= LAMBDA_MULT;
+         }
+
+         if (minError == -1)
+         {
+            minError = curError;
+         }
+         else
+         {
+            minError = Math.min(minError, curError);
+         }
+
+         // Print the current error twenty times
+         if (e % (epochs / 20) == 0)
+         {
+            System.out.println("Epoch " + e + ": Error = " + Math.sqrt(curError));
+         }
       }
    }
 
    /**
     * Finds the gradient of the error function with respect to each weight, for a given test case.
-    * This function assumes the network has any number of inputs, one hidden layer, and one output.
+    * This function assumes the network has two inputs, one hidden layer, and one output.
     *
-    * @param input    the input test case to train the network on
-    * @param expected the expected output for that test case
+    * @param input        the input test case to train the network on
+    * @param expected     the expected output for that test case
+    * @param learningRate the amount the weights are updated by
     */
-   private double[][][] getDeltaWeightsSingleOutput(double[] input, double[] expected)
+   private void updateWeights(double[] input, double[] expected, double learningRate)
    {
-      // run the neural network
       double[] output = propagate(input);
 
-      // create the delta weights array
-      double[][][] deltaWeights = new double[numOfLayers][][];
-      for (int n = 0; n < numOfLayers; n++)
-      {
-         deltaWeights[n] = new double[sizeOfLayers[n]][sizeOfLayers[n + 1]];
-      }
-
-      // calculate the change in weights for the second layer
       for (int j = 0; j < sizeOfLayers[1]; j++)
       {
-         deltaWeights[1][j][0] = (expected[0] - output[0]) * outputFunctionPrime(activations[2][0]) *
+         double deltaWeight = (expected[0] - output[0]) * outputFunctionPrime(activations[2][0]) *
                  activations[1][j];
+         weights[1][j][0] += learningRate * deltaWeight;
       }
 
-      // calculate the change in weights for the first layer
       for (int k = 0; k < sizeOfLayers[0]; k++)
       {
          for (int j = 0; j < sizeOfLayers[1]; j++)
          {
-            deltaWeights[0][k][j] = activations[0][k] * outputFunctionPrime(activations[1][j]) *
+            double deltaWeight = activations[0][k] * outputFunctionPrime(activations[1][j]) *
                     (expected[0] - output[0]) * outputFunctionPrime(activations[2][0]) * weights[1][j][0];
+            weights[0][k][j] += learningRate * deltaWeight;
          }
       }
-
-      return deltaWeights;
-   }
-
-   /**
-    * Finds the gradient of the error function with respect to each weight, for a given test case.
-    * This function assumes the network has any number of inputs, one hidden layer, and any number of outputs.
-    *
-    * @param input    the input test case to train the network on
-    * @param expected the expected output for that test case
-    */
-   private double[][][] getDeltaWeightsMultipleOutputs(double[] input, double[] expected) {
-      // run the neural network
-      double[] output = propagate(input);
-
-      // create the delta weights array
-      double[][][] deltaWeights = new double[numOfLayers][][];
-      for (int n = 0; n < numOfLayers; n++)
-      {
-         deltaWeights[n] = new double[sizeOfLayers[n]][sizeOfLayers[n + 1]];
-      }
-
-      // calculate the change in weights for the second layer
-      for (int j = 0; j < sizeOfLayers[1]; j++)
-      {
-         for (int i = 0; i < sizeOfLayers[2]; i++)
-         {
-            deltaWeights[1][j][i] = (expected[i] - output[i]) * outputFunctionPrime(activations[2][i]) *
-                    activations[1][j];
-         }
-      }
-
-      // calculate the change in weights for the first layer
-      for (int k = 0; k < sizeOfLayers[0]; k++)
-      {
-         for (int j = 0; j < sizeOfLayers[1]; j++)
-         {
-            for (int i = 0; i < sizeOfLayers[2]; i++)
-            {
-               deltaWeights[0][k][j] += activations[0][k] * outputFunctionPrime(activations[1][j]) *
-                       (expected[i] - output[i]) * outputFunctionPrime(activations[2][i]) * weights[1][j][i];
-            }
-         }
-      }
-
-      return deltaWeights;
-   }
-
-   /**
-    * Calculates the total error for every single test case in the training data. This total error is a quadratic mean
-    * of the error for each test case, which calculates the difference between the output the network gets and the
-    * expected output for the input.
-    *
-    * @param trainingData the inputs and expected output for each training case
-    * @return the error between the expected output and the output the network gets
-    */
-   double calculateError(double[][][] trainingData)
-   {
-      double error = 0;
-      for (double[][] testCase : trainingData)                                            // for each test case
-      {
-         double[] output = propagate(testCase[0]);                                        // propagate to get the output
-         double singleError = 0;
-         for (int i = 0; i < output.length; i++)
-         {
-            singleError += (testCase[1][i] - output[i]) * (testCase[1][i] - output[i]);   // compare output with expected
-         }
-         error += (0.5 * singleError) * (0.5 * singleError);                              // sum this up for each case
-      }
-
-      return error;
    }
 
    /**
@@ -420,8 +329,8 @@ public class NeuralNet
     */
    private double outputFunction(double x)
    {
-//      return x;
-      return 1 / (1 + Math.exp(-x));
+      return x;
+//      return 1 / (1 + Math.exp(-x));
    }
 
    /**
@@ -432,8 +341,49 @@ public class NeuralNet
     */
    private double outputFunctionPrime(double x)
    {
-//      return 1.0;
-      return x * (1 - x);
+      return 1.0;
+//      return outputFunction(x) * (1 - outputFunction(x));
+   }
+
+   // E = 0.5 * (T - F) ^ 2
+   private double[][][] backPropagate(double[] input, double[] expected)
+   {
+      double[] output = propagate(input);
+      double[] delta = new double[output.length];
+      for (int i = 0; i < delta.length; i++)
+      {
+         delta[i] = expected[i] - output[i];
+      }
+
+      double[][][] deltaWeights = new double[numOfLayers][][];
+      for (int n = 0; n < numOfLayers; n++)
+      {
+         deltaWeights[n] = new double[sizeOfLayers[n]][sizeOfLayers[n + 1]];
+      }
+
+      for (int n = numOfLayers - 1; n >= 0; n--)
+      {
+         for (int i = 0; i < sizeOfLayers[n]; i++)
+         {
+            for (int j = 0; j < sizeOfLayers[n + 1]; j++)
+            {
+               deltaWeights[n][i][j] = delta[j] * outputFunctionPrime(activations[n + 1][j]) *
+                       activations[n][i];
+            }
+         }
+
+         double[] newDelta = new double[sizeOfLayers[n]];
+         for (int i = 0; i < sizeOfLayers[n]; i++)
+         {
+            for (int j = 0; j < sizeOfLayers[n + 1]; j++)
+            {
+               newDelta[i] += delta[j] * weights[n][i][j];
+            }
+         }
+         delta = newDelta;
+      }
+
+      return deltaWeights;
    }
 
 }

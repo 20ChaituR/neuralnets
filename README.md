@@ -35,12 +35,27 @@ values are given space-separated.
 
 An example of a training data file is:
 
-    3 2 1
+    4 2 1
     0 0
     0
     0 1
     1
     1 0
     1
+    1 1
+    0
     
-In this case, there are 3 test cases, each with 2 input nodes and 1 output node.
+In this case, there are 4 test cases, each with 2 input nodes and 1 output node.
+
+## Structure of the Configuration File
+
+The format of the configuration file is as follows:
+                                        
+First, the size of each layer is given. Each of these sizes are given space-separated.
+
+Each of the next lines contain a variable that configures a part of the training:
+
+Lambda Multiplier - how much to multiply the learning rate by each epoch\
+Learning Rate - the initial learning rate of the network\
+Epochs - the number of epochs to run\
+Error Threshold - the neural net stops when it goes below this error
