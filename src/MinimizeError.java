@@ -127,11 +127,11 @@ public class MinimizeError
     */
    public static void main(String[] args) throws IOException
    {
-      // Load the training data from the training file
-      double[][][] trainingData = getTrainingData(TRAINING_FILE);
-
       // Get the configuration of the neural net from the config file
       getConfig(CONFIG_FILE);
+
+      // Load the training data from the training file
+      double[][][] trainingData = getTrainingData(TRAINING_FILE);
 
       // Create a neural net with the given layer sizes
       NeuralNet nn = new NeuralNet(layers);
@@ -156,12 +156,34 @@ public class MinimizeError
             nn.storeWeights(WEIGHTS_FILE);
             System.out.println("Iteration " + e + ": Error = " + Math.sqrt(minError));
 
-            System.out.println("In: Out");
-            System.out.println("00: " + nn.propagate(new double[]{0, 0})[0]);
-            System.out.println("01: " + nn.propagate(new double[]{0, 1})[0]);
-            System.out.println("10: " + nn.propagate(new double[]{1, 0})[0]);
-            System.out.println("11: " + nn.propagate(new double[]{1, 1})[0]);
-            System.out.println();
+//            System.out.println("In: Out");
+            for (double[][] testCase : trainingData) {
+               StringBuilder printedTestCase = new StringBuilder();
+               printedTestCase.append("Input:    ");
+               for (int i = 0; i < testCase[0].length; i++) {
+                  printedTestCase.append(testCase[0][i]).append(",");
+               }
+               printedTestCase.deleteCharAt(printedTestCase.length()-1);
+               printedTestCase.append("\nExpected: ");
+               for (int i = 0; i < testCase[1].length; i++) {
+                  printedTestCase.append(testCase[1][i]).append(",");
+               }
+               printedTestCase.deleteCharAt(printedTestCase.length()-1);
+               printedTestCase.append("\nOutput:   ");
+               double[] output = nn.propagate(testCase[0]);
+               for (int i = 0; i < output.length; i++) {
+                  printedTestCase.append(output[i]).append(",");
+               }
+               printedTestCase.deleteCharAt(printedTestCase.length()-1);
+               System.out.println(printedTestCase + "\n");
+            }
+            System.out.println("\n\n");
+
+//            System.out.println("00: " + nn.propagate(new double[]{0, 0})[0]);
+//            System.out.println("01: " + nn.propagate(new double[]{0, 1})[0]);
+//            System.out.println("10: " + nn.propagate(new double[]{1, 0})[0]);
+//            System.out.println("11: " + nn.propagate(new double[]{1, 1})[0]);
+//            System.out.println();
          }
 
          e++;
