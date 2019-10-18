@@ -342,6 +342,10 @@ public class NeuralNet
       {
          for (int i = 0; i < sizeOfLayers[2]; i++)
          {
+            double activationSum = 0;
+            for (int J = 0; J < sizeOfLayers[1]; J++) {
+               activationSum += activations[1][J] * weights[1][J][i];
+            }
             deltaWeights[1][j][i] = (expected[i] - output[i]) * outputFunctionPrime(activations[2][i]) *
                     activations[1][j];
          }
@@ -397,7 +401,7 @@ public class NeuralNet
    private double outputFunction(double x)
    {
 //      return x;
-      return 1 / (1 + Math.exp(-x));
+      return 1.0 / (1.0 + Math.exp(-x));
    }
 
    /**
@@ -409,7 +413,7 @@ public class NeuralNet
    private double outputFunctionPrime(double x)
    {
 //      return 1.0;
-      return x * (1 - x);
+      return x * (1.0 - x);
    }
 
 }

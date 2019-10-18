@@ -59,7 +59,7 @@ Error Threshold - the neural net stops when it goes below this error
 
 ## Structure of the Output
 
-Every iteration, if the error decreases the program will print the diagnostic information of the training and the output of the neural network for each training case. The structure of this is as follows:
+Every iteration, if the error decreases the program will first print the diagnostic information of the training, then it will print the output of the neural network for each training case. The structure of this output is as follows:
 
 First, the input values are given in one line, separated by commas. Then, the expected output array is given. Finally, the neural network's output array is given. An example of this is:
 
