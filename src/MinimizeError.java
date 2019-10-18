@@ -1,24 +1,28 @@
-import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Scanner;
 
 /**
- * Minimization:
+ * Error Minimization
  *
- * Trains the neural network multiple times to minimize the error.
+ * Repeatedly randomizes the weights and trains the neural network, updating the minimum error each time. The user has
+ * the option to override the default configuration, training data, and weights files.
+ *
+ * In the configuration file, the user can configure the size of each layer of the neural network, the initial learning
+ * rate and learning rate multiplier, the number of epochs that will be run, and the minimum error for the network. In
+ * the training data file, the user gives the number of training cases, and gives the input and output arrays for each
+ * training case. The weights file is where the weights are stored after the neural net completes its training.
  *
  * @author Chaitanya Ravuri
  * @version September 24, 2019
  */
 public class MinimizeError
 {
-   // the input files are assumed to be in the same directory as this program
-   static final String WEIGHTS_FILE = "weights.txt";
-   static final String TRAINING_FILE = "trainingData.txt";
-   static final String IM_TRAINING_FILE = "imageTrainingData.txt";
-   static final String CONFIG_FILE = "config.txt";
+   // the default input files for the program
+   static String weightsFile = "weights.txt";
+   static String trainingFile = "trainingData.txt";
+   static String configFile = "config.txt";
 
    // meta values that configure the training of the neural net
    static int[] layers;
@@ -81,24 +85,6 @@ public class MinimizeError
       return trainingData;
    }
 
-   static double[][][] getImageTrainingData(String filename) throws IOException
-   {
-      BufferedReader br = new BufferedReader(new FileReader(filename));
-      DibDump dd = new DibDump();
-      int numOfTrainingCases = Integer.parseInt(br.readLine());
-      double[][][] trainingData = new double[numOfTrainingCases][2][];
-      for (int i = 0; i < numOfTrainingCases; i++)
-      {
-         String inputFile = br.readLine();
-         trainingData[i][0] = dd.bmpToArray(inputFile);
-
-         String outputFile = br.readLine();
-         trainingData[i][1] = dd.bmpToArray(outputFile);
-      }
-
-      return trainingData;
-   }
-
    /**
     * This function reads the configuration of the neural net from the config file. The structure
     * of the config file is as follows:
@@ -110,6 +96,7 @@ public class MinimizeError
     * Lambda Multiplier - how much to multiply the learning rate by each epoch
     * Learning Rate - the initial learning rate of the network
     * Epochs - the number of epochs to run
+    * Maximum Iterations - the maximum number of times to randomize the weights of the network and retrain it
     * Error Threshold - the neural net stops when it goes below this error
     *
     * @param filename the file to read the configuration from
@@ -148,11 +135,40 @@ public class MinimizeError
     */
    public static void main(String[] args) throws IOException
    {
+      // If the user wants to override the file paths, they can enter in the config, training data, and weights files manually
+      Scanner sc = new Scanner(System.in);
+      System.out.println("Do you want to override the default file paths? (y/n)");
+
+      String ans = sc.next();
+      if (ans.charAt(0) == 'y')
+      {
+         System.out.println("What is the file path of the config file? (type default for the default path)");
+         ans = sc.next();
+         if (!ans.equals("default"))
+         {
+            configFile = ans;
+         }
+
+         System.out.println("What is the file path of the training data file? (type default for the default path)");
+         ans = sc.next();
+         if (!ans.equals("default"))
+         {
+            trainingFile = ans;
+         }
+
+         System.out.println("What is the file path of the weights file? (type default for the default path)");
+         ans = sc.next();
+         if (!ans.equals("default"))
+         {
+            weightsFile = ans;
+         }
+      }
+
       // Get the configuration of the neural net from the config file
-      getConfig(CONFIG_FILE);
+      getConfig(configFile);
 
       // Load the training data from the training file
-      double[][][] trainingData = getTrainingData(TRAINING_FILE);
+      double[][][] trainingData = getTrainingData(trainingFile);
 
       // Create a neural net with the given layer sizes
       NeuralNet nn = new NeuralNet(layers);
@@ -174,24 +190,29 @@ public class MinimizeError
          if (curError < minError)
          {
             minError = curError;
-            nn.storeWeights(WEIGHTS_FILE);
+            nn.storeWeights(weightsFile);
             System.out.println("Iteration " + e + ": Error = " + Math.sqrt(minError));
 
-//            System.out.println("In: Out");
+            // For each test case
             for (double[][] testCase : trainingData)
             {
+               // Print each input
                StringBuilder printedTestCase = new StringBuilder();
                printedTestCase.append("Input:    ");
                for (int i = 0; i < testCase[0].length; i++)
                {
-                  printedTestCase.append(testCase[0][i]).append(",");
+                  printedTestCase.append((int) testCase[0][i]).append(",");
                }
+
+               // Print the expected output for the test case
                printedTestCase.deleteCharAt(printedTestCase.length() - 1);
                printedTestCase.append("\nExpected: ");
                for (int i = 0; i < testCase[1].length; i++)
                {
-                  printedTestCase.append(testCase[1][i]).append(",");
+                  printedTestCase.append((int) testCase[1][i]).append(",");
                }
+
+               // Print the neural network's output for the test case
                printedTestCase.deleteCharAt(printedTestCase.length() - 1);
                printedTestCase.append("\nOutput:   ");
                double[] output = nn.propagate(testCase[0]);
@@ -202,13 +223,7 @@ public class MinimizeError
                printedTestCase.deleteCharAt(printedTestCase.length() - 1);
                System.out.println(printedTestCase + "\n");
             }
-            System.out.println("\n\n");
-
-//            System.out.println("00: " + nn.propagate(new double[]{0, 0})[0]);
-//            System.out.println("01: " + nn.propagate(new double[]{0, 1})[0]);
-//            System.out.println("10: " + nn.propagate(new double[]{1, 0})[0]);
-//            System.out.println("11: " + nn.propagate(new double[]{1, 1})[0]);
-//            System.out.println();
+            System.out.println("\n");
          }
 
          e++;

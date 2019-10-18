@@ -54,5 +54,6 @@ Each of the next lines contain a variable that configures a part of the training
 
 Lambda Multiplier - how much to multiply the learning rate by each epoch\
 Learning Rate - the initial learning rate of the network\
-Epochs - the number of epochs to run\
+Maximum Epochs - the maximum number of epochs that will be run when training the network\
+Maximum Iterations - the maximum number of times to randomize the weights of the network and retrain it\
 Error Threshold - the neural net stops when it goes below this error

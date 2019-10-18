@@ -302,10 +302,6 @@ public class NeuralNet
 
          e++;
       }
-
-      if (printingRate > 0) {
-         System.out.println("Number of Epochs: " + e + "\nFinal Learning Rate: " + learningRate + "\nFinal Error: " + minError);
-      }
    }
 
    /**
