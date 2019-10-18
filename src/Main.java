@@ -30,7 +30,7 @@ public class Main
 
          NeuralNet nn = new NeuralNet(MinimizeError.layers);
 
-         nn.train(trainingData, MinimizeError.learningRate, MinimizeError.lambdaMult, MinimizeError.epochs, 20);
+         nn.train(trainingData, MinimizeError.learningRate, MinimizeError.lambdaMult, MinimizeError.epochs);
 
          System.out.println("In: Out");
          System.out.println("00: " + nn.propagate(new double[]{0, 0})[0]);

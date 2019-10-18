@@ -241,9 +241,8 @@ public class NeuralNet
     * @param learningRate the initial learning rate of the network
     * @param lambdaMult   how much to multiply the learning rate by for each iteration
     * @param epochs       the number of epochs that training will run for
-    * @param printingRate how many times to print the error
     */
-   public void train(double[][][] trainingData, double learningRate, double lambdaMult, int epochs, int printingRate)
+   public String train(double[][][] trainingData, double learningRate, double lambdaMult, int epochs)
    {
       double minError = -1;
 
@@ -296,14 +295,26 @@ public class NeuralNet
             }
          }
 
-         // Print the current error
-         if (printingRate > 0 && e % (epochs / printingRate) == 0)
-         {
-            System.out.println("Epoch " + e + ": Error = " + Math.sqrt(minError));
-         }
-
          e++;
       }
+
+      // Return the ending diagnostic information: the final epoch, learning rate, error, and reason for stopping
+      String diagnosticInformation = "";
+      diagnosticInformation += "Final Epoch: " + e + "\n";
+      diagnosticInformation += "Final Learning Rate " + learningRate + "\n";
+      diagnosticInformation += "Final Error: " + Math.sqrt(minError) + "\n";
+
+      diagnosticInformation += "Reason for stopping: ";
+      if (e > epochs)
+      {
+         diagnosticInformation += "Reached max epochs\n";
+      }
+      else if (learningRate == 0)
+      {
+         diagnosticInformation += "Learning rate went to 0\n";
+      }
+
+      return diagnosticInformation;
    }
 
    /**

@@ -14,6 +14,8 @@ import java.util.Scanner;
  * the training data file, the user gives the number of training cases, and gives the input and output arrays for each
  * training case. The weights file is where the weights are stored after the neural net completes its training.
  *
+ * After the neural network is run, the error and the outputs for each training case is printed.
+ *
  * @author Chaitanya Ravuri
  * @version September 24, 2019
  */
@@ -29,6 +31,7 @@ public class MinimizeError
    static double lambdaMult;
    static double learningRate;
    static int epochs;
+   static int maxIterations;
    static double errorThreshold;
 
    /**
@@ -125,6 +128,9 @@ public class MinimizeError
       epochs = sc.nextInt();
 
       sc.next();
+      maxIterations = sc.nextInt();
+
+      sc.next();
       errorThreshold = sc.nextDouble();
    }
 
@@ -163,6 +169,10 @@ public class MinimizeError
             weightsFile = ans;
          }
       }
+      else
+      {
+         System.out.println("\nThe order of outputs for the given input is OR, AND, XOR.\n");
+      }
 
       // Get the configuration of the neural net from the config file
       getConfig(configFile);
@@ -175,13 +185,13 @@ public class MinimizeError
 
       double minError = Double.MAX_VALUE;
       int e = 1;
-      while (minError > errorThreshold * errorThreshold)
+      while (e <= maxIterations && minError > errorThreshold * errorThreshold)
       {
          // Randomize the weights
          nn.generateWeights();
 
          // Train with the given configuration
-         nn.train(trainingData, learningRate, lambdaMult, epochs, 0);
+         String diagnosticInformation = nn.train(trainingData, learningRate, lambdaMult, epochs);
 
          // Calculate the error
          double curError = nn.calculateError(trainingData);
@@ -191,7 +201,9 @@ public class MinimizeError
          {
             minError = curError;
             nn.storeWeights(weightsFile);
-            System.out.println("Iteration " + e + ": Error = " + Math.sqrt(minError));
+            System.out.println("Iteration " + e);
+
+            System.out.println(diagnosticInformation);
 
             // For each test case
             for (double[][] testCase : trainingData)

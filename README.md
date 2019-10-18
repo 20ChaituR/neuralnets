@@ -1,9 +1,8 @@
-To run this neural network, run Main.java. The Neural Network will read the weights from the file 
-"weights.txt". The program will ask for the input values, which should be space-separated and given in 
-standard input.
+To run this neural network, run MinimizeError.java
 
-You can choose whether or not the network is a Boolean Neural Network. If it is, the network can be 
-trained using the data in "trainingData.txt".
+The program will create a neural network with the specifications contained in the configuration file. It will then repeatedly randomize the weights of the network and train it using the data in the training data file. If the error decreases, it will print the output of the neural network and store the weights in the weights file.
+
+You can override the default file paths if you wish. Your files should have the following structures:
 
 ## Structure of the Weights File
 
@@ -57,3 +56,17 @@ Learning Rate - the initial learning rate of the network\
 Maximum Epochs - the maximum number of epochs that will be run when training the network\
 Maximum Iterations - the maximum number of times to randomize the weights of the network and retrain it\
 Error Threshold - the neural net stops when it goes below this error
+
+## Structure of the Output
+
+Every iteration, if the error decreases the program will print the diagnostic information of the training and the output of the neural network for each training case. The structure of this is as follows:
+
+First, the input values are given in one line, separated by commas. Then, the expected output array is given. Finally, the neural network's output array is given. An example of this is:
+
+    Input:    1,1
+    Expected: 1,1,0
+    Output:   0.99,0.99,0.005
+    
+Here, the input is 1, 1. The expected output for this input is 1, 1, 0. What the neural network outputted was 0.99, 0.99, 0.05.
+
+This same structure is repeated for every training case in the training data.
