@@ -86,7 +86,7 @@ public class MinimizeError
       }
 
       return trainingData;
-   }
+   } // static double[][][] getTrainingData(String filename)
 
    /**
     * This function reads the configuration of the neural net from the config file. The structure
@@ -132,7 +132,7 @@ public class MinimizeError
 
       sc.next();
       errorThreshold = sc.nextDouble();
-   }
+   } // static void getConfig(String filename)
 
    /**
     * The main method first loads in the training data and configuration of the neural net. It then repeatedly
@@ -150,21 +150,21 @@ public class MinimizeError
       {
          String defaultResponse = "default";
 
-         System.out.println("What is the file path of the config file? (type "  + defaultResponse + " for the default path)");
+         System.out.println("What is the file path of the config file? (type " + defaultResponse + " for the default path)");
          ans = sc.next();
          if (!ans.equals(defaultResponse))
          {
             configFile = ans;
          }
 
-         System.out.println("What is the file path of the training data file? (type "  + defaultResponse + " for the default path)");
+         System.out.println("What is the file path of the training data file? (type " + defaultResponse + " for the default path)");
          ans = sc.next();
          if (!ans.equals(defaultResponse))
          {
             trainingFile = ans;
          }
 
-         System.out.println("What is the file path of the weights file? (type "  + defaultResponse + " for the default path)");
+         System.out.println("What is the file path of the weights file? (type " + defaultResponse + " for the default path)");
          ans = sc.next();
          if (!ans.equals(defaultResponse))
          {
@@ -236,12 +236,12 @@ public class MinimizeError
                }
                printedTestCase.deleteCharAt(printedTestCase.length() - 1);
                System.out.println(printedTestCase + "\n");
-            }
+            } // for (double[][] testCase : trainingData)
             System.out.println("\n");
-         }
+         } // if (curError < minError)
 
          e++;
-      }
-   }
+      } // while (e <= maxIterations && minError > errorThreshold * errorThreshold)
+   } // public static void main(String[] args)
 
-}
+} // public class MinimizeError

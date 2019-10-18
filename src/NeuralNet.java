@@ -14,12 +14,14 @@ import java.util.StringTokenizer;
  * random values. In addition, these weights can be stored into a file. The network is run by
  * calling the propagate function, which calculates the output of the network from the given input.
  *
+ * This network can be trained with any number of training cases. For training, there have to be
+ * three layers, with any number of input, hidden, and output nodes.
+ *
  * @author Chaitanya Ravuri
  * @version September 4, 2019
  */
 public class NeuralNet
 {
-
    private final boolean DEBUG = false;
 
    private int[] sizeOfLayers;            // number of units in each activation layer
@@ -194,7 +196,7 @@ public class NeuralNet
          pw.println();
       }
       pw.close();
-   }
+   } // public void storeWeights(String filename)
 
    /**
     * Given the activations for all input nodes, this function propagates those inputs through the
@@ -214,14 +216,22 @@ public class NeuralNet
          for (int i = 0; i < sizeOfLayers[n + 1]; i++)
          {
             activations[n + 1][i] = 0;
-            if (DEBUG) System.out.print("DEBUG: a[" + (n + 1) + "][" + i + "] = f(");
+            if (DEBUG)
+            {
+               System.out.print("DEBUG: a[" + (n + 1) + "][" + i + "] = f(");
+            }
             for (int j = 0; j < sizeOfLayers[n]; j++)
             {
                activations[n + 1][i] += weights[n][j][i] * activations[n][j];
                if (DEBUG)
+               {
                   System.out.print("a[" + n + "][" + j + "]*w[" + n + "][" + j + "][" + i + "] + ");
+               }
             }
-            if (DEBUG) System.out.println(")");
+            if (DEBUG)
+            {
+               System.out.println(")");
+            }
 
             // applies the output function to the nodes
             activations[n + 1][i] = outputFunction(activations[n + 1][i]);
@@ -229,7 +239,7 @@ public class NeuralNet
       }
 
       return activations[numOfLayers];
-   }
+   } // public double[] propagate(double[] input)
 
    /**
     * Trains the neural network with the given training data and calculates the error with the test
@@ -293,10 +303,10 @@ public class NeuralNet
             {
                minError = curError;
             }
-         }
+         } // for (double[][] trainingCase : trainingData)
 
          e++;
-      }
+      } // while (e <= epochs && learningRate != 0)
 
       // Return the ending diagnostic information: the final epoch, learning rate, error, and reason for stopping
       String diagnosticInformation = "";
@@ -315,7 +325,7 @@ public class NeuralNet
       }
 
       return diagnosticInformation;
-   }
+   } // public String train(double[][][] trainingData, double learningRate, double lambdaMult, int epochs)
 
    /**
     * Finds the gradient of the error function with respect to each weight, for a given test case.
@@ -327,6 +337,8 @@ public class NeuralNet
     */
    private double[][][] getDeltaWeights(double[] input, double[] expected)
    {
+      int a = 0, h = 1, F = 2;
+
       // run the neural network
       double[] output = propagate(input);
 
@@ -338,34 +350,30 @@ public class NeuralNet
       }
 
       // calculate the change in weights for the second layer
-      for (int j = 0; j < sizeOfLayers[1]; j++)
+      for (int j = 0; j < sizeOfLayers[h]; j++)
       {
-         for (int i = 0; i < sizeOfLayers[2]; i++)
+         for (int i = 0; i < sizeOfLayers[F]; i++)
          {
-            double activationSum = 0;
-            for (int J = 0; J < sizeOfLayers[1]; J++) {
-               activationSum += activations[1][J] * weights[1][J][i];
-            }
-            deltaWeights[1][j][i] = (expected[i] - output[i]) * outputFunctionPrime(activations[2][i]) *
-                    activations[1][j];
+            deltaWeights[h][j][i] = (expected[i] - output[i]) * outputFunctionPrime(activations[F][i]) *
+                    activations[h][j];
          }
       }
 
       // calculate the change in weights for the first layer
-      for (int k = 0; k < sizeOfLayers[0]; k++)
+      for (int k = 0; k < sizeOfLayers[a]; k++)
       {
-         for (int j = 0; j < sizeOfLayers[1]; j++)
+         for (int j = 0; j < sizeOfLayers[h]; j++)
          {
-            for (int i = 0; i < sizeOfLayers[2]; i++)
+            for (int i = 0; i < sizeOfLayers[F]; i++)
             {
-               deltaWeights[0][k][j] += activations[0][k] * outputFunctionPrime(activations[1][j]) *
-                       (expected[i] - output[i]) * outputFunctionPrime(activations[2][i]) * weights[1][j][i];
+               deltaWeights[a][k][j] += activations[a][k] * outputFunctionPrime(activations[h][j]) *
+                       (expected[i] - output[i]) * outputFunctionPrime(activations[F][i]) * weights[h][j][i];
             }
          }
       }
 
       return deltaWeights;
-   }
+   } // private double[][][] getDeltaWeights(double[] input, double[] expected)
 
    /**
     * Calculates the total error for every single test case in the training data. This total error is a quadratic mean
@@ -416,4 +424,4 @@ public class NeuralNet
       return x * (1.0 - x);
    }
 
-}
+} // public class NeuralNet
