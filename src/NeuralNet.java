@@ -302,6 +302,10 @@ public class NeuralNet
 
          e++;
       }
+
+      if (printingRate > 0) {
+         System.out.println("Number of Epochs: " + e + "\nFinal Learning Rate: " + learningRate + "\nFinal Error: " + minError);
+      }
    }
 
    /**
@@ -350,7 +354,8 @@ public class NeuralNet
     * @param input    the input test case to train the network on
     * @param expected the expected output for that test case
     */
-   private double[][][] getDeltaWeightsMultipleOutputs(double[] input, double[] expected) {
+   private double[][][] getDeltaWeightsMultipleOutputs(double[] input, double[] expected)
+   {
       // run the neural network
       double[] output = propagate(input);
 

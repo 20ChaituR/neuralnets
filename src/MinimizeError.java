@@ -1,10 +1,13 @@
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Scanner;
 
 /**
- * Minimizing
+ * Minimization:
+ *
+ * Trains the neural network multiple times to minimize the error.
  *
  * @author Chaitanya Ravuri
  * @version September 24, 2019
@@ -14,6 +17,7 @@ public class MinimizeError
    // the input files are assumed to be in the same directory as this program
    static final String WEIGHTS_FILE = "weights.txt";
    static final String TRAINING_FILE = "trainingData.txt";
+   static final String IM_TRAINING_FILE = "imageTrainingData.txt";
    static final String CONFIG_FILE = "config.txt";
 
    // meta values that configure the training of the neural net
@@ -28,14 +32,13 @@ public class MinimizeError
     * This matrix is indexed as trainingData[n][type][i], where n is the test case, type is either 0
     * or 1, 0 for input and 1 for output, and i is the index of the input/output value.
     *
-    * The format of the training data is as follows: On the first line, the number of test cases,
-    * number of input nodes, number of output nodes are given. Then, on the following lines, for
-    * each test case, first the input values are given, space-separated, then the expected output
+    * The format of the training data is as follows: On the first line, the number of test cases is given. Then, on the
+    * following lines, for each test case, first the input values are given, space-separated, then the expected output
     * values are given space-separated.
     *
     * An example of a training data file is:
     *
-    * 3 2 1
+    * 3
     * 0 0
     * 0
     * 0 1
@@ -53,8 +56,8 @@ public class MinimizeError
       Scanner sc = new Scanner(new FileReader(filename));
 
       int sizeOfData = sc.nextInt();
-      int sizeOfInput = sc.nextInt();
-      int sizeOfOutput = sc.nextInt();
+      int sizeOfInput = layers[0];
+      int sizeOfOutput = layers[layers.length - 1];
 
       double[][][] trainingData = new double[sizeOfData][2][];
 
@@ -73,6 +76,24 @@ public class MinimizeError
             outputData[j] = sc.nextDouble();
          }
          trainingData[i][1] = outputData;
+      }
+
+      return trainingData;
+   }
+
+   static double[][][] getImageTrainingData(String filename) throws IOException
+   {
+      BufferedReader br = new BufferedReader(new FileReader(filename));
+      DibDump dd = new DibDump();
+      int numOfTrainingCases = Integer.parseInt(br.readLine());
+      double[][][] trainingData = new double[numOfTrainingCases][2][];
+      for (int i = 0; i < numOfTrainingCases; i++)
+      {
+         String inputFile = br.readLine();
+         trainingData[i][0] = dd.bmpToArray(inputFile);
+
+         String outputFile = br.readLine();
+         trainingData[i][1] = dd.bmpToArray(outputFile);
       }
 
       return trainingData;
@@ -157,24 +178,28 @@ public class MinimizeError
             System.out.println("Iteration " + e + ": Error = " + Math.sqrt(minError));
 
 //            System.out.println("In: Out");
-            for (double[][] testCase : trainingData) {
+            for (double[][] testCase : trainingData)
+            {
                StringBuilder printedTestCase = new StringBuilder();
                printedTestCase.append("Input:    ");
-               for (int i = 0; i < testCase[0].length; i++) {
+               for (int i = 0; i < testCase[0].length; i++)
+               {
                   printedTestCase.append(testCase[0][i]).append(",");
                }
-               printedTestCase.deleteCharAt(printedTestCase.length()-1);
+               printedTestCase.deleteCharAt(printedTestCase.length() - 1);
                printedTestCase.append("\nExpected: ");
-               for (int i = 0; i < testCase[1].length; i++) {
+               for (int i = 0; i < testCase[1].length; i++)
+               {
                   printedTestCase.append(testCase[1][i]).append(",");
                }
-               printedTestCase.deleteCharAt(printedTestCase.length()-1);
+               printedTestCase.deleteCharAt(printedTestCase.length() - 1);
                printedTestCase.append("\nOutput:   ");
                double[] output = nn.propagate(testCase[0]);
-               for (int i = 0; i < output.length; i++) {
+               for (int i = 0; i < output.length; i++)
+               {
                   printedTestCase.append(output[i]).append(",");
                }
-               printedTestCase.deleteCharAt(printedTestCase.length()-1);
+               printedTestCase.deleteCharAt(printedTestCase.length() - 1);
                System.out.println(printedTestCase + "\n");
             }
             System.out.println("\n\n");

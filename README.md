@@ -28,14 +28,11 @@ two nodes to two nodes, and the second layer connects two nodes to one node.
 
 ## Structure of the Training Data File
 
-The format of the training data is as follows: On the first line, the number of test cases,
-number of input nodes, number of output nodes are given. Then, on the following lines, for
-each test case, first the input values are given, space-separated, then the expected output
-values are given space-separated.
+The format of the training data is as follows: On the first line, the number of test cases is given. Then, on the following lines, for each test case, first the input values are given, space-separated, then the expected output values are given space-separated.
 
 An example of a training data file is:
 
-    4 2 1
+    4
     0 0
     0
     0 1
