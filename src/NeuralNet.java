@@ -253,7 +253,7 @@ public class NeuralNet
          for (double[][] trainingCase : trainingData)
          {
             // Find how much the weights need to change for each training case
-            double[][][] deltaWeights = getDeltaWeightsMultipleOutputs(trainingCase[0], trainingCase[1]);
+            double[][][] deltaWeights = getDeltaWeights(trainingCase[0], trainingCase[1]);
             for (int n = 0; n < numOfLayers; n++)
             {
                for (int i = 0; i < sizeOfLayers[n]; i++)
@@ -271,11 +271,13 @@ public class NeuralNet
             // Change the learning rate depending on if the error is decreasing or increasing
             if (minError != -1 && curError < minError)
             {
+               // If the error is decreasing, increase the learning rate
                learningRate *= lambdaMult;
                minError = curError;
             }
             else if (minError != -1 && curError >= minError)
             {
+               // If the error is increasing, undo the change to the weights and decrease the learning rate
                for (int n = 0; n < numOfLayers; n++)
                {
                   for (int i = 0; i < sizeOfLayers[n]; i++)
@@ -306,51 +308,13 @@ public class NeuralNet
 
    /**
     * Finds the gradient of the error function with respect to each weight, for a given test case.
-    * This function assumes the network has any number of inputs, one hidden layer, and one output.
-    *
-    * @param input    the input test case to train the network on
-    * @param expected the expected output for that test case
-    */
-   private double[][][] getDeltaWeightsSingleOutput(double[] input, double[] expected)
-   {
-      // run the neural network
-      double[] output = propagate(input);
-
-      // create the delta weights array
-      double[][][] deltaWeights = new double[numOfLayers][][];
-      for (int n = 0; n < numOfLayers; n++)
-      {
-         deltaWeights[n] = new double[sizeOfLayers[n]][sizeOfLayers[n + 1]];
-      }
-
-      // calculate the change in weights for the second layer
-      for (int j = 0; j < sizeOfLayers[1]; j++)
-      {
-         deltaWeights[1][j][0] = (expected[0] - output[0]) * outputFunctionPrime(activations[2][0]) *
-                 activations[1][j];
-      }
-
-      // calculate the change in weights for the first layer
-      for (int k = 0; k < sizeOfLayers[0]; k++)
-      {
-         for (int j = 0; j < sizeOfLayers[1]; j++)
-         {
-            deltaWeights[0][k][j] = activations[0][k] * outputFunctionPrime(activations[1][j]) *
-                    (expected[0] - output[0]) * outputFunctionPrime(activations[2][0]) * weights[1][j][0];
-         }
-      }
-
-      return deltaWeights;
-   }
-
-   /**
-    * Finds the gradient of the error function with respect to each weight, for a given test case.
     * This function assumes the network has any number of inputs, one hidden layer, and any number of outputs.
     *
     * @param input    the input test case to train the network on
     * @param expected the expected output for that test case
+    * @return the gradient of each weight with respect to the error
     */
-   private double[][][] getDeltaWeightsMultipleOutputs(double[] input, double[] expected)
+   private double[][][] getDeltaWeights(double[] input, double[] expected)
    {
       // run the neural network
       double[] output = propagate(input);
