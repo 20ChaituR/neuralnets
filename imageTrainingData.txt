@@ -1,3 +1,3 @@
-1
-test1.bmp
-test1.bmp
+1 100 100
+small1.bmp
+small1.bmp

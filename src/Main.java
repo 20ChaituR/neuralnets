@@ -25,7 +25,7 @@ public class Main
       if (ans.charAt(0) == 'y')
       {
          // The program trains, then runs the neural net on all of the possible boolean inputs
-         double[][][] trainingData = MinimizeError.getTrainingData(MinimizeError.trainingFile);
+         double[][][] trainingData = new double[2][2][2];
          MinimizeError.getConfig(MinimizeError.configFile);
 
          NeuralNet nn = new NeuralNet(MinimizeError.layers);

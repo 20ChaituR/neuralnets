@@ -1,3 +1,4 @@
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -23,10 +24,14 @@ public class MinimizeError
 {
    // the default input files for the program
    static String weightsFile = "weights.txt";
-   static String trainingFile = "trainingData.txt";
    static String configFile = "config.txt";
+   static String trainingFile = "imageTrainingData.txt";
 
    // meta values that configure the training of the neural net
+   static int sizeOfInput;
+   static int sizeOfOutput;
+   static int imHeight;
+   static int imWidth;
    static int[] layers;
    static double lambdaMult;
    static double learningRate;
@@ -34,59 +39,39 @@ public class MinimizeError
    static int maxIterations;
    static double errorThreshold;
 
-   /**
-    * This function reads the training data from a given file, then returns a matrix containing it.
-    * This matrix is indexed as trainingData[n][type][i], where n is the test case, type is either 0
-    * or 1, 0 for input and 1 for output, and i is the index of the input/output value.
-    *
-    * The format of the training data is as follows: On the first line, the number of test cases is given. Then, on the
-    * following lines, for each test case, first the input values are given, space-separated, then the expected output
-    * values are given space-separated.
-    *
-    * An example of a training data file is:
-    *
-    * 3
-    * 0 0
-    * 0
-    * 0 1
-    * 1
-    * 1 0
-    * 1
-    *
-    * In this case, there are 3 test cases, each with 2 input nodes and 1 output node.
-    *
-    * @param filename the file to read the training data from
-    * @return the matrix of training data
-    */
-   static double[][][] getTrainingData(String filename) throws FileNotFoundException
+   static ImageWrapper[][] getTrainingData(String filename) throws IOException
    {
-      Scanner sc = new Scanner(new FileReader(filename));
-
-      int sizeOfData = sc.nextInt();
-      int sizeOfInput = layers[0];
-      int sizeOfOutput = layers[layers.length - 1];
-
-      double[][][] trainingData = new double[sizeOfData][2][];
-
-      for (int i = 0; i < sizeOfData; i++)
+      BufferedReader br = new BufferedReader(new FileReader(filename));
+      int numOfTrainingCases = Integer.parseInt(br.readLine());
+      ImageWrapper[][] trainingData = new ImageWrapper[numOfTrainingCases][2];
+      for (int i = 0; i < numOfTrainingCases; i++)
       {
-         double[] inputData = new double[sizeOfInput];
-         for (int j = 0; j < sizeOfInput; j++)
-         {
-            inputData[j] = sc.nextDouble();
-         }
-         trainingData[i][0] = inputData;
+         String inputFile = br.readLine();
+         trainingData[i][0] = new ImageWrapper(inputFile);
 
-         double[] outputData = new double[sizeOfOutput];
-         for (int j = 0; j < sizeOfOutput; j++)
-         {
-            outputData[j] = sc.nextDouble();
-         }
-         trainingData[i][1] = outputData;
+         String outputFile = br.readLine();
+         trainingData[i][1] = new ImageWrapper(outputFile);
       }
 
       return trainingData;
-   } // static double[][][] getTrainingData(String filename)
+   }
+
+   static double scalingFactor = 0x01000000;
+
+   static double[][][] imageTrainingDataToTrainingData(ImageWrapper[][] images) {
+      double[][][] trainingData = new double[images.length][images[0].length][];
+
+      for (int i = 0; i < images.length; i++) {
+         for (int j = 0; j < images[0].length; j++) {
+            trainingData[i][j] = images[i][j].toDoubleArray();
+            for (int k = 0; k < trainingData[i][j].length; k++) {
+               trainingData[i][j][k] /= scalingFactor;
+            }
+         }
+      }
+
+      return trainingData;
+   }
 
    /**
     * This function reads the configuration of the neural net from the config file. The structure
@@ -161,7 +146,7 @@ public class MinimizeError
          ans = sc.next();
          if (!ans.equals(defaultResponse))
          {
-            trainingFile = ans;
+            weightsFile = ans;
          }
 
          System.out.println("What is the file path of the weights file? (type " + defaultResponse + " for the default path)");
@@ -180,7 +165,9 @@ public class MinimizeError
       getConfig(configFile);
 
       // Load the training data from the training file
-      double[][][] trainingData = getTrainingData(trainingFile);
+      ImageWrapper[][] imageTrainingData = getTrainingData(trainingFile);
+
+      double[][][] trainingData = imageTrainingDataToTrainingData(imageTrainingData);
 
       // Create a neural net with the given layer sizes
       NeuralNet nn = new NeuralNet(layers);

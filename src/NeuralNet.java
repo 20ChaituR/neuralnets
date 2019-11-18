@@ -28,13 +28,14 @@ public class NeuralNet
    private int numOfLayers;               // number of connectivity layers
 
    private double[][][] weights;          // weights for connections between each layer
+   private double[][][] deltaWeights;     // change in weights for training
    private double[][] activations;        // state of activation for all processing units
 
    /**
     * Constructor that creates a neural network with the size of each activation layer given. The
     * first layer is the input layer and the last is the output layer. This constructor generates
     * all weights such that the network is fully connected between adjacent layers. Weights are
-    * randomized using a Gaussian distribution with mean 0 and standard deviation 1.
+    * randomized between -1 and 1.
     *
     * @param sizeOfLayers the number of processing units in each activation layer
     */
@@ -49,8 +50,7 @@ public class NeuralNet
 
    /**
     * Given the size of each layer and the number of connectivity layers, generates random weights
-    * that connect all nodes in each adjacent layer. Weights are randomized using a Gaussian
-    * distribution with mean 0 and standard deviation 1.
+    * that connect all nodes in each adjacent layer. Weights are randomized between -1 and 1.
     */
    public void generateWeights()
    {
@@ -64,7 +64,7 @@ public class NeuralNet
          {
             for (int j = 0; j < sizeOfLayers[n + 1]; j++)
             {
-               weights[n][i][j] = new Random().nextGaussian();
+               weights[n][i][j] = (Math.random() * 2.0) - 1;
             }
          }
       }
@@ -157,6 +157,12 @@ public class NeuralNet
     */
    private void createActivations()
    {
+      deltaWeights = new double[numOfLayers][][];
+      for (int n = 0; n < numOfLayers; n++)
+      {
+         deltaWeights[n] = new double[sizeOfLayers[n]][sizeOfLayers[n + 1]];
+      }
+
       activations = new double[numOfLayers + 1][];     // There is one more activation layer than connectivity layers
       for (int n = 0; n < sizeOfLayers.length; n++)
       {
@@ -215,7 +221,7 @@ public class NeuralNet
          // calculates the next layer by multiplying the weights by the current layer
          for (int i = 0; i < sizeOfLayers[n + 1]; i++)
          {
-            activations[n + 1][i] = 0;
+            activations[n + 1][i] = 0.0;
             if (DEBUG)
             {
                System.out.print("DEBUG: a[" + (n + 1) + "][" + i + "] = f(");
@@ -257,12 +263,12 @@ public class NeuralNet
       double minError = -1;
 
       int e = 1;
-      while (e <= epochs && learningRate != 0)
+      while (e <= epochs && learningRate != 0.0)
       {
          for (double[][] trainingCase : trainingData)
          {
             // Find how much the weights need to change for each training case
-            double[][][] deltaWeights = getDeltaWeights(trainingCase[0], trainingCase[1]);
+            backPropagate(trainingCase[0], trainingCase[1]);
             for (int n = 0; n < numOfLayers; n++)
             {
                for (int i = 0; i < sizeOfLayers[n]; i++)
@@ -305,6 +311,12 @@ public class NeuralNet
             }
          } // for (double[][] trainingCase : trainingData)
 
+         // Print the current error
+         if (e % (epochs / Main2.printingRate) == 0)
+         {
+            System.out.println("Epoch " + e + ": Error = " + Math.sqrt(minError));
+         }
+
          e++;
       } // while (e <= epochs && learningRate != 0)
 
@@ -342,13 +354,6 @@ public class NeuralNet
       // run the neural network
       double[] output = propagate(input);
 
-      // create the delta weights array
-      double[][][] deltaWeights = new double[numOfLayers][][];
-      for (int n = 0; n < numOfLayers; n++)
-      {
-         deltaWeights[n] = new double[sizeOfLayers[n]][sizeOfLayers[n + 1]];
-      }
-
       // calculate the change in weights for the second layer
       for (int j = 0; j < sizeOfLayers[h]; j++)
       {
@@ -375,6 +380,40 @@ public class NeuralNet
       return deltaWeights;
    } // private double[][][] getDeltaWeights(double[] input, double[] expected)
 
+   private double[][][] backPropagate(double[] input, double[] expected)
+   {
+      double[] output = propagate(input);
+      double[] delta = new double[output.length];
+      for (int i = 0; i < delta.length; i++)
+      {
+         delta[i] = expected[i] - output[i];
+      }
+
+      for (int n = numOfLayers - 1; n >= 0; n--)
+      {
+         for (int i = 0; i < sizeOfLayers[n]; i++)
+         {
+            for (int j = 0; j < sizeOfLayers[n + 1]; j++)
+            {
+               deltaWeights[n][i][j] = delta[j] * outputFunctionPrime(activations[n + 1][j]) *
+                       activations[n][i];
+            }
+         }
+
+         double[] newDelta = new double[sizeOfLayers[n]];
+         for (int i = 0; i < sizeOfLayers[n]; i++)
+         {
+            for (int j = 0; j < sizeOfLayers[n + 1]; j++)
+            {
+               newDelta[i] += delta[j] * weights[n][i][j];
+            }
+         }
+         delta = newDelta;
+      }
+
+      return deltaWeights;
+   }
+
    /**
     * Calculates the total error for every single test case in the training data. This total error is a quadratic mean
     * of the error for each test case, which calculates the difference between the output the network gets and the
@@ -385,11 +424,11 @@ public class NeuralNet
     */
    double calculateError(double[][][] trainingData)
    {
-      double error = 0;
+      double error = 0.0;
       for (double[][] testCase : trainingData)                                            // for each test case
       {
          double[] output = propagate(testCase[0]);                                        // propagate to get the output
-         double singleError = 0;
+         double singleError = 0.0;
          for (int i = 0; i < output.length; i++)
          {
             singleError += (testCase[1][i] - output[i]) * (testCase[1][i] - output[i]);   // compare output with expected
@@ -421,7 +460,8 @@ public class NeuralNet
    private double outputFunctionPrime(double x)
    {
 //      return 1.0;
-      return x * (1.0 - x);
+//      return x * (1.0 - x);
+      return outputFunction(x) * (1.0 - outputFunction(x));
    }
 
 } // public class NeuralNet
