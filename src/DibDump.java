@@ -311,32 +311,41 @@ public class DibDump
  *             masks that specify the red, green, and blue components, respectively, of each pixel.
  *             Each DWORD in the bitmap array represents a single pixel.
  *  biCompression
- *     Specifies the type of compression for a compressed bottom-up bitmap (top-down DIBs cannot be compressed). This member can be one of the following values.
+ *     Specifies the type of compression for a compressed bottom-up bitmap (top-down DIBs cannot be compressed). This member can be
+ *     one of the following values.
  *     Value               Description
  *     BI_RGB              An uncompressed format.
- *     BI_BITFIELDS        Specifies that the bitmap is not compressed and that the color table consists of three DWORD color masks that specify the red, green, and blue components of each pixel.
+ *     BI_BITFIELDS        Specifies that the bitmap is not compressed and that the color table consists of three DWORD color masks
+ *                         that specify the red, green, and blue components of each pixel.
  *                         This is valid when used with 16- and 32-bpp bitmaps.
  *                         This value is valid in Windows Embedded CE versions 2.0 and later.
- *     BI_ALPHABITFIELDS   Specifies that the bitmap is not compressed and that the color table consists of four DWORD color masks that specify the red, green, blue, and alpha components of each pixel.
+ *     BI_ALPHABITFIELDS   Specifies that the bitmap is not compressed and that the color table consists of four DWORD color masks
+ *                         that specify the red, green, blue, and alpha components of each pixel.
  *                         This is valid when used with 16- and 32-bpp bitmaps.
  *                         This value is valid in Windows CE .NET 4.0 and later.
- *                         You can OR any of the values in the above table with BI_SRCPREROTATE to specify that the source DIB section has the same rotation angle as the destination.
+ *                         You can OR any of the values in the above table with BI_SRCPREROTATE to specify that the source DIB
+ *                         section has the same rotation angle as the destination.
  *  biSizeImage
  *     Specifies the size, in bytes, of the image. This value will be the number of bytes in each scan line which must be padded to
  *     insure the line is a multiple of 4 bytes (it must align on a DWORD boundary) times the number of rows.
  *     This value may be set to zero for BI_RGB bitmaps (so you cannot be sure it will be set).
  *  biXPelsPerMeter
  *     Specifies the horizontal resolution, in pixels per meter, of the target device for the bitmap.
- *     An application can use this value to select a bitmap from a resource group that best matches the characteristics of the current device.
+ *     An application can use this value to select a bitmap from a resource group that best matches the characteristics of the
+ *     current device.
  *  biYPelsPerMeter
  *     Specifies the vertical resolution, in pixels per meter, of the target device for the bitmap
  *  biClrUsed
  *     Specifies the number of color indexes in the color table that are actually used by the bitmap.
- *     If this value is zero, the bitmap uses the maximum number of colors corresponding to the value of the biBitCount member for the compression mode specified by biCompression.
- *     If biClrUsed is nonzero and the biBitCount member is less than 16, the biClrUsed member specifies the actual number of colors the graphics engine or device driver accesses.
- *     If biBitCount is 16 or greater, the biClrUsed member specifies the size of the color table used to optimize performance of the system color palettes.
+ *     If this value is zero, the bitmap uses the maximum number of colors corresponding to the value of the biBitCount member for
+ *     the compression mode specified by biCompression.
+ *     If biClrUsed is nonzero and the biBitCount member is less than 16, the biClrUsed member specifies the actual number of colors
+ *     the graphics engine or device driver accesses.
+ *     If biBitCount is 16 or greater, the biClrUsed member specifies the size of the color table used to optimize performance of
+ *     the system color palettes.
  *     If biBitCount equals 16 or 32, the optimal color palette starts immediately following the three DWORD masks.
- *     If the bitmap is a packed bitmap (a bitmap in which the bitmap array immediately follows the BITMAPINFO header and is referenced by a single pointer), the biClrUsed member must be either zero or the actual size of the color table.
+ *     If the bitmap is a packed bitmap (a bitmap in which the bitmap array immediately follows the BITMAPINFO header and is
+ *     referenced by a single pointer), the biClrUsed member must be either zero or the actual size of the color table.
  *  biClrImportant
  *     Specifies the number of color indexes required for displaying the bitmap.
  *     If this value is zero, all colors are required.

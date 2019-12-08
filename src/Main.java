@@ -260,7 +260,7 @@ public class Main
     * the set of weights that lead to the minimum error. When it is done, it prints the error and outputs for each
     * training case.
     */
-   static void minimizeBoolean() throws IOException
+   static void minimizeManual() throws IOException
    {
       // Get the configuration of the neural net from the config file
       getConfig(configFile);
@@ -402,7 +402,7 @@ public class Main
       }
       else
       {
-         minimizeBoolean();   // Should minimize using manually inputted training data
+         minimizeManual();   // Should minimize using manually inputted training data
       }
    } // public static void main(String[] args)
 
