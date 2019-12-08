@@ -177,6 +177,12 @@ public class DibDump
       return ((v << 8) & 0xFF00) | ((v >> 8) & 0x00FF);
    }
 
+/**
+ * Reads an image from a bmp file and makes it into a matrix containing all the pels of that image.
+ *
+ * @param inFileName the input image to read from
+ * @return the array containing the pels of the image
+ */
    public static int[][] bmpToArray(String inFileName)
    {
       int i, j, k;
@@ -703,6 +709,12 @@ public class DibDump
       return imageArray;
    } // public double[] bmpToArray(String inFileName)
 
+/**
+ * Takes in an matrix containing all the pels of the image and outputs those to the given bmp file.
+ *
+ * @param imageArray  the input array containing the pels of the image
+ * @param outFileName the filename of the bmp file to output to
+ */
    public static void imageArrayToBMP(int[][] imageArray, String outFileName)
    {
       DibDump dibdumper = new DibDump();
