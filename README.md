@@ -1,8 +1,9 @@
-To run this neural network, run MinimizeError.java
+To run this neural network, run Main.java
 
-The program will create a neural network with the specifications contained in the configuration file. It will then repeatedly randomize the weights of the network and train it using the data in the training data file. If the error decreases, it will print the output of the neural network and store the weights in the weights file.
-
-You can override the default file paths if you wish. Your files should have the following structures:
+The program will create a neural network with the specifications contained in the configuration file. It will then 
+randomize the weights of the network and train it using the data in the training data file. The output of the network 
+will be put into a bmp file specified by the user. You can override the default file paths if you wish. Your files
+should have the following structures:
 
 ## Structure of the Weights File
 
@@ -25,13 +26,32 @@ An example of a weights file would be:
 Here, there are two connectivity layers, shown by the two matrices. The first layer connects
 two nodes to two nodes, and the second layer connects two nodes to one node.
 
+## Structure of the Image Training Data File
+
+The image training data file contains the filenames of all input and expected bmp files. These files will then be 
+converted to an array and passed through the network. The structure of the file is as follows: The first line has the 
+number of training cases, the height of each image and the width of each image. Then, the next lines contain the input 
+file and the expected output file.
+
+An example of a image training file is:
+
+    2 100 100
+    input1.bmp
+    expected1.bmp
+    input2.bmp
+    expected2.bmp
+    
+Here, there are two training cases, with input and expected images that are 100x100 in size.
+
 ## Structure of the Training Data File
 
-The format of the training data is as follows: On the first line, the number of test cases is given. Then, on the following lines, for each test case, first the input values are given, space-separated, then the expected output values are given space-separated.
+The format of the training data is as follows: On the first line, the number of test cases is given. Then, on the 
+following lines, for each test case, first the input values are given, space-separated, then the expected output values 
+are given space-separated.
 
 An example of a training data file is:
 
-    4
+    4 2 1
     0 0
     0
     0 1
@@ -51,22 +71,11 @@ First, the size of each layer is given. Each of these sizes are given space-sepa
 
 Each of the next lines contain a variable that configures a part of the training:
 
-Lambda Multiplier - how much to multiply the learning rate by each epoch\
-Learning Rate - the initial learning rate of the network\
-Maximum Epochs - the maximum number of epochs that will be run when training the network\
-Maximum Iterations - the maximum number of times to randomize the weights of the network and retrain it\
-Error Threshold - the neural net stops when it goes below this error
-
-## Structure of the Output
-
-Every iteration, if the error decreases the program will first print the diagnostic information of the training, then it will print the output of the neural network for each training case. The structure of this output is as follows:
-
-First, the input values are given in one line, separated by commas. Then, the expected output array is given. Finally, the neural network's output array is given. An example of this is:
-
-    Input:    1,1
-    Expected: 1,1,0
-    Output:   0.99,0.99,0.005
-    
-Here, the input is 1, 1. The expected output for this input is 1, 1, 0. What the neural network outputted was 0.99, 0.99, 0.05.
-
-This same structure is repeated for every training case in the training data.
+    Min Weight:         the smallest value that the weights can be randomized to
+    Max Weight:         the largest value that the weights can be randomized to
+    Learning Rate:      the initial learning rate of the network
+    Lambda Multiplier:  how much to multiply the learning rate by each epoch
+    Maximum Epochs:     the number of epochs that will be run when training the network
+    Maximum Iterations: the number of times the network is retrained
+    Error Threshold:    the neural net stops when it goes below this error
+    Printing Rate:      how often to print the error during training

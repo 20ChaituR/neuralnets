@@ -1,5 +1,4 @@
 import java.io.*;
-import java.util.Random;
 import java.util.StringTokenizer;
 
 /**
@@ -22,14 +21,16 @@ import java.util.StringTokenizer;
  */
 public class NeuralNet
 {
-   private final boolean DEBUG = false;
-
    private int[] sizeOfLayers;            // number of units in each activation layer
    private int numOfLayers;               // number of connectivity layers
 
    private double[][][] weights;          // weights for connections between each layer
    private double[][][] deltaWeights;     // change in weights for training
    private double[][] activations;        // state of activation for all processing units
+
+   private double[][] theta;
+   private double[][] omega;
+   private double[][] psi;
 
    /**
     * Constructor that creates a neural network with the size of each activation layer given. The
@@ -64,7 +65,7 @@ public class NeuralNet
          {
             for (int j = 0; j < sizeOfLayers[n + 1]; j++)
             {
-               weights[n][i][j] = (Math.random() * 2.0) - 1;
+               weights[n][i][j] = (Math.random() * (Main.maxWeight - Main.minWeight)) + Main.minWeight;
             }
          }
       }
@@ -164,9 +165,15 @@ public class NeuralNet
       }
 
       activations = new double[numOfLayers + 1][];     // There is one more activation layer than connectivity layers
+      theta = new double[numOfLayers + 1][];
+      omega = new double[numOfLayers + 1][];
+      psi = new double[numOfLayers + 1][];
       for (int n = 0; n < sizeOfLayers.length; n++)
       {
          activations[n] = new double[sizeOfLayers[n]]; // Each activation layer's size is given in sizeOfLayers
+         theta[n] = new double[sizeOfLayers[n]];
+         omega[n] = new double[sizeOfLayers[n]];
+         psi[n] = new double[sizeOfLayers[n]];
       }
    }
 
@@ -222,21 +229,9 @@ public class NeuralNet
          for (int i = 0; i < sizeOfLayers[n + 1]; i++)
          {
             activations[n + 1][i] = 0.0;
-            if (DEBUG)
-            {
-               System.out.print("DEBUG: a[" + (n + 1) + "][" + i + "] = f(");
-            }
             for (int j = 0; j < sizeOfLayers[n]; j++)
             {
                activations[n + 1][i] += weights[n][j][i] * activations[n][j];
-               if (DEBUG)
-               {
-                  System.out.print("a[" + n + "][" + j + "]*w[" + n + "][" + j + "][" + i + "] + ");
-               }
-            }
-            if (DEBUG)
-            {
-               System.out.println(")");
             }
 
             // applies the output function to the nodes
@@ -260,10 +255,10 @@ public class NeuralNet
     */
    public String train(double[][][] trainingData, double learningRate, double lambdaMult, int epochs)
    {
-      double minError = -1;
+      double minError = Double.MAX_VALUE;
 
       int e = 1;
-      while (e <= epochs && learningRate != 0.0)
+      while (e <= epochs && learningRate != 0.0 && minError >= Main.errorThreshold)
       {
          for (double[][] trainingCase : trainingData)
          {
@@ -275,7 +270,7 @@ public class NeuralNet
                {
                   for (int j = 0; j < sizeOfLayers[n + 1]; j++)
                   {
-                     weights[n][i][j] += deltaWeights[n][i][j];
+                     weights[n][i][j] += learningRate * deltaWeights[n][i][j];
                   }
                }
             }
@@ -284,13 +279,13 @@ public class NeuralNet
             double curError = calculateError(trainingData);
 
             // Change the learning rate depending on if the error is decreasing or increasing
-            if (minError != -1 && curError < minError)
+            if (minError != Double.MAX_VALUE && curError < minError)
             {
                // If the error is decreasing, increase the learning rate
                learningRate *= lambdaMult;
                minError = curError;
             }
-            else if (minError != -1 && curError >= minError)
+            else if (minError != Double.MAX_VALUE && curError >= minError && lambdaMult != 1.0)
             {
                // If the error is increasing, undo the change to the weights and decrease the learning rate
                for (int n = 0; n < numOfLayers; n++)
@@ -312,7 +307,7 @@ public class NeuralNet
          } // for (double[][] trainingCase : trainingData)
 
          // Print the current error
-         if (e % (epochs / Main2.printingRate) == 0)
+         if (Main.printingRate != 0 && e % (epochs / Main.printingRate) == 0)
          {
             System.out.println("Epoch " + e + ": Error = " + Math.sqrt(minError));
          }
@@ -323,7 +318,7 @@ public class NeuralNet
       // Return the ending diagnostic information: the final epoch, learning rate, error, and reason for stopping
       String diagnosticInformation = "";
       diagnosticInformation += "Final Epoch: " + e + "\n";
-      diagnosticInformation += "Final Learning Rate " + learningRate + "\n";
+      diagnosticInformation += "Final Learning Rate: " + learningRate + "\n";
       diagnosticInformation += "Final Error: " + Math.sqrt(minError) + "\n";
 
       diagnosticInformation += "Reason for stopping: ";
@@ -335,84 +330,80 @@ public class NeuralNet
       {
          diagnosticInformation += "Learning rate went to 0\n";
       }
+      else if (minError < Main.errorThreshold)
+      {
+         diagnosticInformation += "Reached error threshold\n";
+      }
 
       return diagnosticInformation;
    } // public String train(double[][][] trainingData, double learningRate, double lambdaMult, int epochs)
 
    /**
     * Finds the gradient of the error function with respect to each weight, for a given test case.
-    * This function assumes the network has any number of inputs, one hidden layer, and any number of outputs.
+    * This function assumes the network has any number of inputs, any number of hidden layers, and any number of outputs.
     *
     * @param input    the input test case to train the network on
     * @param expected the expected output for that test case
-    * @return the gradient of each weight with respect to the error
     */
-   private double[][][] getDeltaWeights(double[] input, double[] expected)
+   private void backPropagate(double[] input, double[] expected)
    {
-      int a = 0, h = 1, F = 2;
-
-      // run the neural network
-      double[] output = propagate(input);
-
-      // calculate the change in weights for the second layer
-      for (int j = 0; j < sizeOfLayers[h]; j++)
+      // Propagate forward to calculate theta and activations
+      activations[0] = input;
+      for (int n = 0; n < numOfLayers; n++)
       {
-         for (int i = 0; i < sizeOfLayers[F]; i++)
+         // calculates the next layer by multiplying the weights by the current layer
+         for (int i = 0; i < sizeOfLayers[n + 1]; i++)
          {
-            deltaWeights[h][j][i] = (expected[i] - output[i]) * outputFunctionPrime(activations[F][i]) *
-                    activations[h][j];
-         }
-      }
-
-      // calculate the change in weights for the first layer
-      for (int k = 0; k < sizeOfLayers[a]; k++)
-      {
-         for (int j = 0; j < sizeOfLayers[h]; j++)
-         {
-            for (int i = 0; i < sizeOfLayers[F]; i++)
+            theta[n + 1][i] = 0.0;
+            for (int j = 0; j < sizeOfLayers[n]; j++)
             {
-               deltaWeights[a][k][j] += activations[a][k] * outputFunctionPrime(activations[h][j]) *
-                       (expected[i] - output[i]) * outputFunctionPrime(activations[F][i]) * weights[h][j][i];
+               theta[n + 1][i] += weights[n][j][i] * activations[n][j];
             }
+
+            // applies the output function to the nodes
+            activations[n + 1][i] = outputFunction(theta[n + 1][i]);
          }
-      }
+      } // for (int n = 0; n < numOfLayers; n++)
 
-      return deltaWeights;
-   } // private double[][][] getDeltaWeights(double[] input, double[] expected)
-
-   private double[][][] backPropagate(double[] input, double[] expected)
-   {
-      double[] output = propagate(input);
-      double[] delta = new double[output.length];
-      for (int i = 0; i < delta.length; i++)
+      // Calculate omega, psi, and deltaWeights for the last layer
+      for (int i = 0; i < sizeOfLayers[numOfLayers]; i++)
       {
-         delta[i] = expected[i] - output[i];
-      }
+         // omega_j = sum of T_i - a_i
+         omega[numOfLayers][i] = expected[i] - activations[numOfLayers][i];
 
-      for (int n = numOfLayers - 1; n >= 0; n--)
+         // psi_i = omega_i * f'(theta_i)
+         psi[numOfLayers][i] = omega[numOfLayers][i] * outputFunctionPrime(theta[numOfLayers][i]);
+
+         // deltaWeights_ji = a_j * psi_i
+         for (int j = 0; j < sizeOfLayers[numOfLayers - 1]; j++)
+         {
+            deltaWeights[numOfLayers - 1][j][i] = activations[numOfLayers - 1][j] * psi[numOfLayers][i];
+         }
+      } // for (int i = 0; i < sizeOfLayers[numOfLayers]; i++)
+
+      // Propagate backwards to calculate omega, psi and deltaWeights for everything except the last layer
+      for (int n = numOfLayers - 1; n > 0; n--)
       {
-         for (int i = 0; i < sizeOfLayers[n]; i++)
+         for (int j = 0; j < sizeOfLayers[n]; j++)
          {
-            for (int j = 0; j < sizeOfLayers[n + 1]; j++)
+            // omega_j = sum of psi_I * w_jI
+            omega[n][j] = 0.0;
+            for (int I = 0; I < sizeOfLayers[n + 1]; I++)
             {
-               deltaWeights[n][i][j] = delta[j] * outputFunctionPrime(activations[n + 1][j]) *
-                       activations[n][i];
+               omega[n][j] += psi[n + 1][I] * weights[n][j][I];
             }
-         }
 
-         double[] newDelta = new double[sizeOfLayers[n]];
-         for (int i = 0; i < sizeOfLayers[n]; i++)
-         {
-            for (int j = 0; j < sizeOfLayers[n + 1]; j++)
+            // psi_j = omega_j * f'(theta_j)
+            psi[n][j] = omega[n][j] * outputFunctionPrime(theta[n][j]);
+
+            // deltaWeights_kj = a_k * psi_j
+            for (int k = 0; k < sizeOfLayers[n - 1]; k++)
             {
-               newDelta[i] += delta[j] * weights[n][i][j];
+               deltaWeights[n - 1][k][j] = activations[n - 1][k] * psi[n][j];
             }
-         }
-         delta = newDelta;
-      }
-
-      return deltaWeights;
-   }
+         } // for (int j = 0; j < sizeOfLayers[n]; j++)
+      } // for (int n = numOfLayers - 1; n > 0; n--)
+   } // public void backPropagate(double[] input, double[] expected)
 
    /**
     * Calculates the total error for every single test case in the training data. This total error is a quadratic mean
@@ -460,7 +451,6 @@ public class NeuralNet
    private double outputFunctionPrime(double x)
    {
 //      return 1.0;
-//      return x * (1.0 - x);
       return outputFunction(x) * (1.0 - outputFunction(x));
    }
 

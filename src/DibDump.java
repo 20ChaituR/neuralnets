@@ -145,9 +145,11 @@ public class DibDump
    // The true color pels
    static int[][] imageArray;
 
-   // if bmpInfoHeader_biHeight is negative then the image is a top down DIB. This flag is used to
-   // identify it as such. Note that when the image is saved, it will be written out in the usual
-   // inverted format with a positive bmpInfoHeader_biHeight value.
+   /*
+    * if bmpInfoHeader_biHeight is negative then the image is a top down DIB. This flag is used to
+    * identify it as such. Note that when the image is saved, it will be written out in the usual
+    * inverted format with a positive bmpInfoHeader_biHeight value.
+    */
    static boolean topDownDIB = false;
 
    /*
