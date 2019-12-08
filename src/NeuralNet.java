@@ -152,25 +152,29 @@ public class NeuralNet
    }
 
    /**
-    * Creates an empty activations matrix given that the array sizeOfLayers is already created. If
-    * so, the activations matrix will be a jagged matrix with each row having a number of columns
-    * equal to the size of that layer.
+    * Creates an empty deltaWeights, activations, theta, omega, and psi array, given that the array sizeOfLayers
+    * is already created. If so, they will jagged matrices with each row having a number of columns equal to the
+    * size of that layer.
     */
    private void createActivations()
    {
+      // Creates a jagged array of deltaWeights that is the same size as weights
       deltaWeights = new double[numOfLayers][][];
       for (int n = 0; n < numOfLayers; n++)
       {
          deltaWeights[n] = new double[sizeOfLayers[n]][sizeOfLayers[n + 1]];
       }
 
-      activations = new double[numOfLayers + 1][];     // There is one more activation layer than connectivity layers
+      // These four matrices contain the activation, theta, omega, and psi values for each layer.
+      activations = new double[numOfLayers + 1][];
       theta = new double[numOfLayers + 1][];
       omega = new double[numOfLayers + 1][];
       psi = new double[numOfLayers + 1][];
+
+      // Creates a jagged array, with each layer having a length of sizeOfLayers
       for (int n = 0; n < sizeOfLayers.length; n++)
       {
-         activations[n] = new double[sizeOfLayers[n]]; // Each activation layer's size is given in sizeOfLayers
+         activations[n] = new double[sizeOfLayers[n]];
          theta[n] = new double[sizeOfLayers[n]];
          omega[n] = new double[sizeOfLayers[n]];
          psi[n] = new double[sizeOfLayers[n]];
@@ -326,7 +330,7 @@ public class NeuralNet
       {
          diagnosticInformation += "Reached max epochs\n";
       }
-      else if (learningRate == 0)
+      else if (learningRate == 0.0)
       {
          diagnosticInformation += "Learning rate went to 0\n";
       }
@@ -339,8 +343,8 @@ public class NeuralNet
    } // public String train(double[][][] trainingData, double learningRate, double lambdaMult, int epochs)
 
    /**
-    * Finds the gradient of the error function with respect to each weight, for a given test case.
-    * This function assumes the network has any number of inputs, any number of hidden layers, and any number of outputs.
+    * This is the generalized form of backprop. It finds the gradient of the error function with respect to each weight for a given
+    * test case. It can work for a network that has any number of inputs, outputs, or hidden layers.
     *
     * @param input    the input test case to train the network on
     * @param expected the expected output for that test case
@@ -368,7 +372,7 @@ public class NeuralNet
       // Calculate omega, psi, and deltaWeights for the last layer
       for (int i = 0; i < sizeOfLayers[numOfLayers]; i++)
       {
-         // omega_j = sum of T_i - a_i
+         // omega_j = sum of (T_i - a_i)
          omega[numOfLayers][i] = expected[i] - activations[numOfLayers][i];
 
          // psi_i = omega_i * f'(theta_i)
@@ -386,7 +390,7 @@ public class NeuralNet
       {
          for (int j = 0; j < sizeOfLayers[n]; j++)
          {
-            // omega_j = sum of psi_I * w_jI
+            // omega_j = sum of (psi_I * w_jI)
             omega[n][j] = 0.0;
             for (int I = 0; I < sizeOfLayers[n + 1]; I++)
             {
@@ -416,15 +420,15 @@ public class NeuralNet
    double calculateError(double[][][] trainingData)
    {
       double error = 0.0;
-      for (double[][] testCase : trainingData)                                            // for each test case
+      for (double[][] testCase : trainingData)                                                // for each test case
       {
-         double[] output = propagate(testCase[0]);                                        // propagate to get the output
+         double[] output = propagate(testCase[0]);                                            // propagate to get the output
          double singleError = 0.0;
          for (int i = 0; i < output.length; i++)
          {
-            singleError += (testCase[1][i] - output[i]) * (testCase[1][i] - output[i]);   // compare output with expected
+            singleError += 0.5 * (testCase[1][i] - output[i]) * (testCase[1][i] - output[i]); // compare output with expected
          }
-         error += (0.5 * singleError) * (0.5 * singleError);                              // sum this up for each case
+         error += singleError * singleError;                                                  // sum this up for each case
       }
 
       return error;

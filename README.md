@@ -2,12 +2,12 @@ To run this neural network, run Main.java
 
 The program will create a neural network with the specifications contained in the configuration file. It will then 
 randomize the weights of the network and train it using the data in the training data file. The output of the network 
-will be put into a bmp file specified by the user. You can override the default file paths if you wish. Your files
-should have the following structures:
+will either be printed or be put into a bmp file specified by the user. The default output file is `images/output.bmp`. 
+You can override the default file paths if you wish. Your files should have the following structures:
 
 ## Structure of the Weights File
 
-The format for the weights is as follows: first, the size of each layer is given. Then, for each 
+The default filename for the weights file is `weights.txt`. The format of this file is as follows: first, the size of each layer is given. Then, for each 
 layer, the matrix for the weights is given. This matrix is such that the number of rows is the 
 number of nodes in the previous activation layer, and the number of columns is the number of nodes 
 in the next activation layer. Each column is space separated and each row is on the next line. There 
@@ -26,9 +26,9 @@ An example of a weights file would be:
 Here, there are two connectivity layers, shown by the two matrices. The first layer connects
 two nodes to two nodes, and the second layer connects two nodes to one node.
 
-## Structure of the Image Training Data File
+## Structure of the Image Training File
 
-The image training data file contains the filenames of all input and expected bmp files. These files will then be 
+The default filename for the image training file is `trainingImageFiles.txt`. This file contains the filenames of all input and expected bmp files. These files will then be 
 converted to an array and passed through the network. The structure of the file is as follows: The first line has the 
 number of training cases, the height of each image and the width of each image. Then, the next lines contain the input 
 file and the expected output file.
@@ -41,11 +41,11 @@ An example of a image training file is:
     input2.bmp
     expected2.bmp
     
-Here, there are two training cases, with input and expected images that are 100x100 in size.
+Here, there are two training cases, with input and expected images that have a total length of 100 each.
 
 ## Structure of the Training Data File
 
-The format of the training data is as follows: On the first line, the number of test cases is given. Then, on the 
+The default filename for the training file is `trainingData.txt`. The format of this file is as follows: On the first line, the number of test cases is given. Then, on the 
 following lines, for each test case, first the input values are given, space-separated, then the expected output values 
 are given space-separated.
 
@@ -65,7 +65,7 @@ In this case, there are 4 test cases, each with 2 input nodes and 1 output node.
 
 ## Structure of the Configuration File
 
-The format of the configuration file is as follows:
+The default filename for the config file is `config.txt`. The format of this file is as follows:
                                         
 First, the size of each layer is given. Each of these sizes are given space-separated.
 

@@ -31,7 +31,8 @@ public class Main
    static String weightsFile = "weights.txt";
    static String configFile = "config.txt";
    static String trainingFile = "trainingData.txt";
-   static String imageTrainingFile = "imageTrainingData.txt";
+   static String trainingImageFile = "trainingImageFiles.txt";
+   static String trainingImageRawDataFile = "trainingImageRawData.txt";
    static String outputImageFile = "images/output.bmp";
 
    // meta values that configure the training of the neural net
@@ -229,11 +230,11 @@ public class Main
       getConfig(configFile);
 
       // Read images and load them into the training file
-      loadImages(imageTrainingFile, trainingFile);
+      loadImages(trainingImageFile, trainingImageRawDataFile);
 
       // Load the training data from the training file
       System.out.println("Getting Training Data...");
-      double[][][] trainingData = getTrainingData(trainingFile);
+      double[][][] trainingData = getTrainingData(trainingImageRawDataFile);
 
       // Create a neural net with the given layer sizes
       System.out.println("Creating Network...");
@@ -365,7 +366,7 @@ public class Main
             override = sc.next();
             if (!override.equals(defaultResponse))
             {
-               imageTrainingFile = override;
+               trainingImageFile = override;
             }
          }
 
