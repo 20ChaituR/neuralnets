@@ -602,14 +602,14 @@ public class DibDump
                      iByteVal = in.readUnsignedByte();
 
                      iColumn = iBytesPerRow * 2;
-                     pel = colorPallet[(iByteVal >> 4) & 0x0F]; // The High nibble is the last remaining pel
+                     pel = colorPallet[(iByteVal >> 4) & 0x0F];       // The High nibble is the last remaining pel
                      imageArray[i][iColumn] = pel;
                   }
                   for (j = 0; j < iDeadBytes; ++j)
-                     in.readUnsignedByte();                     // Now read in the "dead bytes" to pad to a 4 byte boundary
+                     in.readUnsignedByte();                           // Now read in the "dead bytes" to pad to a 4 byte boundary
                } // for (i = bmpInfoHeader_biHeight - 1; i >= 0; --i)
                break;
-            case 8: // 1 byte, 1 pel, Works
+            case 8:                                                   // 1 byte, 1 pel, Works
 /*
  * Each byte read in is 1 column. We then read in the dead bytes so that each scan line is a multiple of 4 bytes.
  */
@@ -657,7 +657,7 @@ public class DibDump
                      in.readUnsignedByte();                             // Now read in the "dead bytes" to pad to a 4 byte boundary
                } // for (i = bmpInfoHeader_biHeight - 1; i >= 0; --i)
                break;
-            case 24: // Works
+            case 24:                                                    // Works
 /*
  * Each three bytes read in is 1 column. Each scan line is padded to by a multiple of 4 bytes. The disk image has only 3 however.
  */
@@ -681,7 +681,7 @@ public class DibDump
                      in.readUnsignedByte();                           // Now read in the "dead bytes" to pad to a 4 byte boundary
                }
                break;
-            case 32: // Works
+            case 32:                                                  // Works
 /*
  * Each four bytes read in is 1 column. The number of bytes per line will always be a multiple of 4, so there are no dead bytes.
  */

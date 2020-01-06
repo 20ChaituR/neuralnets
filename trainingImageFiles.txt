@@ -1,3 +1,11 @@
 1 10201 10201
-images/test1.bmp
-images/test1.bmp
+hands/Chaitu1.bmp
+hands/Chaitu1.bmp
+hands/Chaitu2.bmp
+hands/Chaitu2.bmp
+hands/Chaitu3.bmp
+hands/Chaitu3.bmp
+hands/Chaitu4.bmp
+hands/Chaitu4.bmp
+hands/Chaitu5.bmp
+hands/Chaitu5.bmp

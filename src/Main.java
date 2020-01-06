@@ -101,6 +101,7 @@ public class Main
 
       sc.next();
       errorThreshold = sc.nextDouble();
+      errorThreshold *= errorThreshold;
 
       sc.next();
       printingRate = sc.nextInt();
@@ -342,7 +343,7 @@ public class Main
       // If the user wants to override the file paths, they can enter in the config, training data, and weights files manually
       Scanner sc = new Scanner(System.in);
 
-      System.out.println("Will you be training using images? (y/n)");
+      System.out.println("Will you be manually entering in the training data? (y/n)");
       String type = sc.next();
 
       System.out.println("Do you want to override the default file paths? (y/n)");
@@ -396,7 +397,7 @@ public class Main
          }
       } // if (override.charAt(0) == 'y')
 
-      if (type.charAt(0) == 'y')
+      if (type.charAt(0) == 'n')
       {
          minimizeBMP();       // Should load images then minimize
       }

@@ -25,7 +25,6 @@ public class NeuralNet
    private int numOfLayers;               // number of connectivity layers
 
    private double[][][] weights;          // weights for connections between each layer
-   private double[][][] deltaWeights;     // change in weights for training
    private double[][] activations;        // state of activation for all processing units
 
    private double[][] theta;
@@ -65,10 +64,22 @@ public class NeuralNet
          {
             for (int j = 0; j < sizeOfLayers[n + 1]; j++)
             {
-               weights[n][i][j] = (Math.random() * (Main.maxWeight - Main.minWeight)) + Main.minWeight;
+               weights[n][i][j] = uniformRandom(Main.minWeight, Main.maxWeight);
             }
          }
       }
+   }
+
+   /**
+    * Generates a random number uniformly between the minimum and maximum value, and returns it
+    *
+    * @param minVal the minimum value of the random number
+    * @param maxVal the maximum value of the random number
+    * @return the random number between minVal and maxVal
+    */
+   private double uniformRandom(double minVal, double maxVal)
+   {
+      return (Math.random() * (maxVal - minVal)) + minVal;
    }
 
    /**
@@ -158,13 +169,6 @@ public class NeuralNet
     */
    private void createActivations()
    {
-      // Creates a jagged array of deltaWeights that is the same size as weights
-      deltaWeights = new double[numOfLayers][][];
-      for (int n = 0; n < numOfLayers; n++)
-      {
-         deltaWeights[n] = new double[sizeOfLayers[n]][sizeOfLayers[n + 1]];
-      }
-
       // These four matrices contain the activation, theta, omega, and psi values for each layer.
       activations = new double[numOfLayers + 1][];
       theta = new double[numOfLayers + 1][];
@@ -267,17 +271,7 @@ public class NeuralNet
          for (double[][] trainingCase : trainingData)
          {
             // Find how much the weights need to change for each training case
-            backPropagate(trainingCase[0], trainingCase[1]);
-            for (int n = 0; n < numOfLayers; n++)
-            {
-               for (int i = 0; i < sizeOfLayers[n]; i++)
-               {
-                  for (int j = 0; j < sizeOfLayers[n + 1]; j++)
-                  {
-                     weights[n][i][j] += learningRate * deltaWeights[n][i][j];
-                  }
-               }
-            }
+            backPropagate(trainingCase[0], trainingCase[1], learningRate);
 
             // Calculate the error using the training data
             double curError = calculateError(trainingData);
@@ -291,17 +285,7 @@ public class NeuralNet
             }
             else if (minError != Double.MAX_VALUE && curError >= minError && lambdaMult != 1.0)
             {
-               // If the error is increasing, undo the change to the weights and decrease the learning rate
-               for (int n = 0; n < numOfLayers; n++)
-               {
-                  for (int i = 0; i < sizeOfLayers[n]; i++)
-                  {
-                     for (int j = 0; j < sizeOfLayers[n + 1]; j++)
-                     {
-                        weights[n][i][j] -= learningRate * deltaWeights[n][i][j];
-                     }
-                  }
-               }
+               // If the error is increasing, decrease the learning rate
                learningRate /= lambdaMult;
             }
             else
@@ -348,8 +332,9 @@ public class NeuralNet
     *
     * @param input    the input test case to train the network on
     * @param expected the expected output for that test case
+    * @param learningRate the rate at which to change the weights
     */
-   private void backPropagate(double[] input, double[] expected)
+   private void backPropagate(double[] input, double[] expected, double learningRate)
    {
       // Propagate forward to calculate theta and activations
       activations[0] = input;
@@ -369,10 +354,10 @@ public class NeuralNet
          }
       } // for (int n = 0; n < numOfLayers; n++)
 
-      // Calculate omega, psi, and deltaWeights for the last layer
+      // Calculate omega, psi, and weights for the last layer
       for (int i = 0; i < sizeOfLayers[numOfLayers]; i++)
       {
-         // omega_j = sum of (T_i - a_i)
+         // omega_i = T_i - a_i
          omega[numOfLayers][i] = expected[i] - activations[numOfLayers][i];
 
          // psi_i = omega_i * f'(theta_i)
@@ -381,11 +366,11 @@ public class NeuralNet
          // deltaWeights_ji = a_j * psi_i
          for (int j = 0; j < sizeOfLayers[numOfLayers - 1]; j++)
          {
-            deltaWeights[numOfLayers - 1][j][i] = activations[numOfLayers - 1][j] * psi[numOfLayers][i];
+            weights[numOfLayers - 1][j][i] += learningRate * activations[numOfLayers - 1][j] * psi[numOfLayers][i];
          }
       } // for (int i = 0; i < sizeOfLayers[numOfLayers]; i++)
 
-      // Propagate backwards to calculate omega, psi and deltaWeights for everything except the last layer
+      // Propagate backwards to calculate omega, psi and weights for everything except the last layer
       for (int n = numOfLayers - 1; n > 0; n--)
       {
          for (int j = 0; j < sizeOfLayers[n]; j++)
@@ -403,7 +388,7 @@ public class NeuralNet
             // deltaWeights_kj = a_k * psi_j
             for (int k = 0; k < sizeOfLayers[n - 1]; k++)
             {
-               deltaWeights[n - 1][k][j] = activations[n - 1][k] * psi[n][j];
+               weights[n - 1][k][j] += learningRate * activations[n - 1][k] * psi[n][j];
             }
          } // for (int j = 0; j < sizeOfLayers[n]; j++)
       } // for (int n = numOfLayers - 1; n > 0; n--)
