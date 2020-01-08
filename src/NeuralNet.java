@@ -340,7 +340,7 @@ public class NeuralNet
       activations[0] = input;
       for (int n = 0; n < numOfLayers; n++)
       {
-         // calculates the next layer by multiplying the weights by the current layer
+         // Calculates the next layer by multiplying the weights by the current layer
          for (int i = 0; i < sizeOfLayers[n + 1]; i++)
          {
             theta[n + 1][i] = 0.0;
@@ -349,12 +349,12 @@ public class NeuralNet
                theta[n + 1][i] += weights[n][j][i] * activations[n][j];
             }
 
-            // applies the output function to the nodes
+            // Applies the output function to the nodes
             activations[n + 1][i] = outputFunction(theta[n + 1][i]);
          }
       } // for (int n = 0; n < numOfLayers; n++)
 
-      // Calculate omega, psi, and weights for the last layer
+      // Calculate omega and psi for the last layer
       for (int i = 0; i < sizeOfLayers[numOfLayers]; i++)
       {
          // omega_i = T_i - a_i
@@ -362,12 +362,6 @@ public class NeuralNet
 
          // psi_i = omega_i * f'(theta_i)
          psi[numOfLayers][i] = omega[numOfLayers][i] * outputFunctionPrime(theta[numOfLayers][i]);
-
-         // deltaWeights_ji = a_j * psi_i
-         for (int j = 0; j < sizeOfLayers[numOfLayers - 1]; j++)
-         {
-            weights[numOfLayers - 1][j][i] += learningRate * activations[numOfLayers - 1][j] * psi[numOfLayers][i];
-         }
       } // for (int i = 0; i < sizeOfLayers[numOfLayers]; i++)
 
       // Propagate backwards to calculate omega, psi and weights for everything except the last layer
@@ -385,13 +379,22 @@ public class NeuralNet
             // psi_j = omega_j * f'(theta_j)
             psi[n][j] = omega[n][j] * outputFunctionPrime(theta[n][j]);
 
-            // deltaWeights_kj = a_k * psi_j
-            for (int k = 0; k < sizeOfLayers[n - 1]; k++)
+            // deltaWeights_ji = a_j * psi_i
+            for (int i = 0; i < sizeOfLayers[n + 1]; i++)
             {
-               weights[n - 1][k][j] += learningRate * activations[n - 1][k] * psi[n][j];
+               weights[n][j][i] += learningRate * activations[n][j] * psi[n + 1][i];
             }
          } // for (int j = 0; j < sizeOfLayers[n]; j++)
       } // for (int n = numOfLayers - 1; n > 0; n--)
+
+      // Calculate weights for first layer
+      int n = 0;
+      for (int i = 0; i < sizeOfLayers[n + 1]; i++) {
+         for (int j = 0; j < sizeOfLayers[n]; j++) {
+            // deltaWeights_ji = a_j * psi_i
+            weights[n][j][i] += learningRate * activations[n][j] * psi[n + 1][i];
+         }
+      }
    } // public void backPropagate(double[] input, double[] expected)
 
    /**
