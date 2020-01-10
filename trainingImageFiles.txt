@@ -1,11 +1,11 @@
-1 10201 10201
-hands/Chaitu1.bmp
-hands/Chaitu1.bmp
-hands/Chaitu2.bmp
-hands/Chaitu2.bmp
-hands/Chaitu3.bmp
-hands/Chaitu3.bmp
-hands/Chaitu4.bmp
-hands/Chaitu4.bmp
-hands/Chaitu5.bmp
-hands/Chaitu5.bmp
+5 1600 1600
+hands/small1.bmp
+hands/small1.bmp
+hands/small2.bmp
+hands/small2.bmp
+hands/small3.bmp
+hands/small3.bmp
+hands/small4.bmp
+hands/small4.bmp
+hands/small5.bmp
+hands/small5.bmp

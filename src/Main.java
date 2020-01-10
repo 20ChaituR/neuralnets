@@ -22,6 +22,14 @@ import java.util.Scanner;
  * for each training case is printed. If image data was used, then the output of the network will be put into a bmp file
  * that is given by the user.
  *
+ * Methods in this class:
+ * void         getConfig(String filename)
+ * double[][][] getTrainingData(String filename
+ * void         loadImages(String inFileName, String outFileName)
+ * void         minimizeBMP()
+ * void         minimizeManual()
+ * void         main(String[] args)
+ *
  * @author Chaitanya Ravuri
  * @version September 24, 2019
  */
@@ -193,6 +201,7 @@ public class Main
       {
          // Read image from given file
          ImageWrapper inImage = new ImageWrapper(sc.next());
+         inImage.toGrayScale();
 
          // Store the height and width of the image
          imHeight = inImage.getHeight();
@@ -208,6 +217,7 @@ public class Main
 
          // Read output image and print data to the output file
          ImageWrapper outImage = new ImageWrapper(sc.next());
+         outImage.toGrayScale();
          double[] outArray = outImage.toDoubleArray();
          for (int j = 0; j < outArray.length; j++)
          {
@@ -274,6 +284,7 @@ public class Main
       System.out.println("Creating Network...");
       NeuralNet nn = new NeuralNet(layers);
 
+      System.out.println("Training...");
       double minError = Double.MAX_VALUE;
       int e = 1;
       while (e <= maxIterations && minError > errorThreshold * errorThreshold)
@@ -304,7 +315,7 @@ public class Main
                printedTestCase.append("Input:    ");
                for (int i = 0; i < testCase[0].length; i++)
                {
-                  printedTestCase.append((int) testCase[0][i]).append(",");
+                  printedTestCase.append(testCase[0][i]).append(",");
                }
 
                // Print the expected output for the test case
@@ -312,7 +323,7 @@ public class Main
                printedTestCase.append("\nExpected: ");
                for (int i = 0; i < testCase[1].length; i++)
                {
-                  printedTestCase.append((int) testCase[1][i]).append(",");
+                  printedTestCase.append(testCase[1][i]).append(",");
                }
 
                // Print the neural network's output for the test case

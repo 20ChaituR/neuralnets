@@ -5,15 +5,24 @@
  * 2D to 1D and back, and can scale the pels so that they fall between zero and one. This is used so that the image can
  * be inputted into the neural network.
  *
+ * Methods in this class:
+ * double[] toDoubleArray()
+ * void     toGrayScale()
+ * void     toBMP(String fileName)
+ * int      getHeight()
+ * int      getWidth()
+ *
  * @author Chaitanya Ravuri
  * @version October 24, 2019
  */
 public class ImageWrapper
 {
 
-   public int[][] imageArray;                     // The matrix containing all the pels of the image
+   private final double COLOR_SCALING_FACTOR = 1 << 24; // The amount to divide all pels by so that they are between 0 and 1
+   private final double GRAY_SCALING_FACTOR = 1 << 8; // The amount to divide all luminosities by so that they are between 0 and 1
 
-   private final double SCALING_FACTOR = 1 << 24; // The amount to divide all pels by so that they are between 0 and 1
+   public int[][] imageArray;                     // The matrix containing all the pels of the image
+   private double scalingFactor;
 
    /**
     * Creates a new ImageWrapper from a file. This constructor reads the image array from the file and masks off the
@@ -31,6 +40,7 @@ public class ImageWrapper
             imageArray[i][j] &= 0x00ffffff;
          }
       }
+      scalingFactor = COLOR_SCALING_FACTOR;
    }
 
    /**
@@ -44,11 +54,12 @@ public class ImageWrapper
    public ImageWrapper(double[] image, int height, int width)
    {
       imageArray = new int[height][width];
+      scalingFactor = COLOR_SCALING_FACTOR;
       for (int i = 0; i < height; i++)
       {
          for (int j = 0; j < width; j++)
          {
-            imageArray[i][j] = (int) (image[i * height + j] * SCALING_FACTOR);
+            imageArray[i][j] = (int) (image[i * height + j] * scalingFactor);
          }
       }
    }
@@ -61,6 +72,7 @@ public class ImageWrapper
    public ImageWrapper(int[][] imageArray)
    {
       this.imageArray = imageArray;
+      scalingFactor = COLOR_SCALING_FACTOR;
    }
 
    /**
@@ -76,11 +88,17 @@ public class ImageWrapper
       {
          for (int c = 0; c < imageArray[0].length; c++)
          {
-            imageDoubleArray[r * imageArray.length + c] = (double) (imageArray[r][c]) / SCALING_FACTOR;
+            imageDoubleArray[r * imageArray.length + c] = (double) (imageArray[r][c]) / scalingFactor;
          }
       }
 
       return imageDoubleArray;
+   }
+
+   public void toGrayScale()
+   {
+      imageArray = DibDump.colorImageToGrayscale(imageArray);
+      scalingFactor = GRAY_SCALING_FACTOR;
    }
 
    /**

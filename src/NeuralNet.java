@@ -16,6 +16,18 @@ import java.util.StringTokenizer;
  * This network can be trained with any number of training cases. For training, there have to be
  * three layers, with any number of input, hidden, and output nodes.
  *
+ * Methods in this class:
+ * void     generateWeights()
+ * double   uniformRandom(double minVal, double maxVal)
+ * void     createActivations()
+ * void     storeWeights(String filename)
+ * double[] propagate(double[] input)
+ * String   train(double[][][] trainingData, double learningRate, double lambdaMult, int epochs)
+ * void     backPropagate(double[] input, double[] expected, double learningRate)
+ * double   calculateError(double[][][] trainingData)
+ * double   outputFunction(double x)
+ * double   outputFunctionPrime(double x)
+ *
  * @author Chaitanya Ravuri
  * @version September 4, 2019
  */
@@ -330,8 +342,8 @@ public class NeuralNet
     * This is the generalized form of backprop. It finds the gradient of the error function with respect to each weight for a given
     * test case. It can work for a network that has any number of inputs, outputs, or hidden layers.
     *
-    * @param input    the input test case to train the network on
-    * @param expected the expected output for that test case
+    * @param input        the input test case to train the network on
+    * @param expected     the expected output for that test case
     * @param learningRate the rate at which to change the weights
     */
    private void backPropagate(double[] input, double[] expected, double learningRate)
@@ -389,8 +401,10 @@ public class NeuralNet
 
       // Calculate weights for first layer
       int n = 0;
-      for (int i = 0; i < sizeOfLayers[n + 1]; i++) {
-         for (int j = 0; j < sizeOfLayers[n]; j++) {
+      for (int i = 0; i < sizeOfLayers[n + 1]; i++)
+      {
+         for (int j = 0; j < sizeOfLayers[n]; j++)
+         {
             // deltaWeights_ji = a_j * psi_i
             weights[n][j][i] += learningRate * activations[n][j] * psi[n + 1][i];
          }
@@ -405,7 +419,7 @@ public class NeuralNet
     * @param trainingData the inputs and expected output for each training case
     * @return the error between the expected output and the output the network gets
     */
-   double calculateError(double[][][] trainingData)
+   public double calculateError(double[][][] trainingData)
    {
       double error = 0.0;
       for (double[][] testCase : trainingData)                                                // for each test case
