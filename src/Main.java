@@ -36,7 +36,7 @@ import java.util.Scanner;
 public class Main
 {
    // the default input files for the program
-   static String weightsFile = "weights.txt";
+   static String weightsFile = "weights2.txt";
    static String configFile = "config.txt";
    static String trainingFile = "trainingData.txt";
    static String trainingImageFile = "trainingImageFiles.txt";

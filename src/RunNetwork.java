@@ -5,9 +5,16 @@ public class RunNetwork
 
    public static void main(String[] args) throws IOException
    {
+//      for (int i = 1; i <= 5; i++) {
+//         ImageWrapper im = new ImageWrapper("hands/small" + i + ".bmp");
+//         im.toGrayScale();
+//         im.toBMP("hands/gray" + i + ".bmp");
+//      }
+      // Create network with given weights
       System.out.println("Creating Network...");
       NeuralNet nn = new NeuralNet("weights.txt");
 
+      // Get the five training cases
       System.out.println("Getting Training Data...");
       Main.getConfig(Main.configFile);
       double[][][] trainingData = Main.getTrainingData(Main.trainingFile);

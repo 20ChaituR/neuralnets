@@ -157,23 +157,23 @@ public class DibDump
    // The true color pels
    static int[][] imageArray;
 
-   /*
-    * if bmpInfoHeader_biHeight is negative then the image is a top down DIB. This flag is used to
-    * identify it as such. Note that when the image is saved, it will be written out in the usual
-    * inverted format with a positive bmpInfoHeader_biHeight value.
-    */
+/*
+ * if bmpInfoHeader_biHeight is negative then the image is a top down DIB. This flag is used to
+ * identify it as such. Note that when the image is saved, it will be written out in the usual
+ * inverted format with a positive bmpInfoHeader_biHeight value.
+ */
    static boolean topDownDIB = false;
 
-   /*
-    * Ratio of each color in an RGB pel, so it can be converted to grayscale.
-    */
+/*
+ * Ratio of each color in an RGB pel, so it can be converted to grayscale.
+ */
    private static final double RED_RATIO = 0.3;
    private static final double GREEN_RATIO = 0.589;
    private static final double BLUE_RATIO = 0.11;
 
-   /*
-    * Methods to go between little and big endian integer formats.
-    */
+/*
+ * Methods to go between little and big endian integer formats.
+ */
    public static int swapInt(int v)
    {
       return (v >>> 24) | (v << 24) | ((v << 8) & 0x00FF0000) | ((v >> 8) & 0x0000FF00);
@@ -201,15 +201,27 @@ public class DibDump
       return rgb;
    }
 
+   /*
+    * The rgbToPel method takes red, green and blue color values and returns a single 32-bit integer color.
+    * See pelToRGB(int pel) to go the other way.
+    */
+   public static int rgbToPel(int red, int green, int blue)
+   {
+      return (red << 16) | (green << 8) | blue;
+   }
+
    /**
     * Y = 0.3RED+0.59GREEN+0.11Blue
-    * The colorToGrayscale method takes a color picture element (pel) and returns the gray scale pel using just one of may possible formulas
+    * The colorToGrayscale method takes a color picture element (pel) and returns the gray scale pel using just one of may possible
+    * formulas
     */
    public static int colorToGrayscale(int pel)
    {
       RgbQuad rgb = pelToRGB(pel);
 
-      return (int) Math.round(RED_RATIO * (double) rgb.red + GREEN_RATIO * (double) rgb.green + BLUE_RATIO * (double) rgb.blue);
+      int lum = (int) Math.round(RED_RATIO * (double) rgb.red + GREEN_RATIO * (double) rgb.green + BLUE_RATIO * (double) rgb.blue);
+
+      return rgbToPel(lum, lum, lum);
    }
 
    /**
@@ -242,28 +254,28 @@ public class DibDump
          // Convert our input stream to a DataInputStream
          DataInputStream in = new DataInputStream(fstream);
 
-         /*
-          *  Read in BITMAPFILEHEADER
-          *
-          *           typedef struct tagBITMAPFILEHEADER {
-          *                   WORD    bfType;
-          *                   DWORD   bfSize;
-          *                   WORD    bfReserved1;
-          *                   WORD    bfReserved2;
-          *                   DWORD   bfOffBits;
-          *           } BITMAPFILEHEADER, FAR *LPBITMAPFILEHEADER, *PBITMAPFILEHEADER;
-          *
-          *  bfType
-          *     Specifies the file type. It must be set to the signature word BM (0x4D42) to indicate bitmap.
-          *  bfSize
-          *     Specifies the size, in bytes, of the bitmap file.
-          *  bfReserved1
-          *     Reserved; set to zero
-          *  bfReserved2
-          *     Reserved; set to zero
-          *  bfOffBits
-          *     Specifies the offset, in bytes, from the BITMAPFILEHEADER structure to the bitmap bits
-          */
+/*
+ *  Read in BITMAPFILEHEADER
+ *
+ *           typedef struct tagBITMAPFILEHEADER {
+ *                   WORD    bfType;
+ *                   DWORD   bfSize;
+ *                   WORD    bfReserved1;
+ *                   WORD    bfReserved2;
+ *                   DWORD   bfOffBits;
+ *           } BITMAPFILEHEADER, FAR *LPBITMAPFILEHEADER, *PBITMAPFILEHEADER;
+ *
+ *  bfType
+ *     Specifies the file type. It must be set to the signature word BM (0x4D42) to indicate bitmap.
+ *  bfSize
+ *     Specifies the size, in bytes, of the bitmap file.
+ *  bfReserved1
+ *     Reserved; set to zero
+ *  bfReserved2
+ *     Reserved; set to zero
+ *  bfOffBits
+ *     Specifies the offset, in bytes, from the BITMAPFILEHEADER structure to the bitmap bits
+ */
 
          // Read and Convert to big endian
          bmpFileHeader_bfType = swapShort(in.readUnsignedShort());        // WORD
@@ -272,125 +284,125 @@ public class DibDump
          bmpFileHeader_bfReserved2 = swapShort(in.readUnsignedShort());   // WORD
          bmpFileHeader_bfOffBits = swapInt(in.readInt());                 // DWORD
 
-         /*
-          *  Read in BITMAPINFOHEADER
-          *
-          *                typedef struct tagBITMAPINFOHEADER{
-          *                        DWORD      biSize;
-          *                        LONG       biWidth;
-          *                        LONG       biHeight;
-          *                        WORD       biPlanes;
-          *                        WORD       biBitCount;
-          *                        DWORD      biCompression;
-          *                        DWORD      biSizeImage;
-          *                        LONG       biXPelsPerMeter;
-          *                        LONG       biYPelsPerMeter;
-          *                        DWORD      biClrUsed;
-          *                        DWORD      biClrImportant;
-          *                } BITMAPINFOHEADER, FAR *LPBITMAPINFOHEADER, *PBITMAPINFOHEADER;
-          *
-          *
-          *  biSize
-          *     Specifies the size of the structure, in bytes.
-          *     This size does not include the color table or the masks mentioned in the biClrUsed member.
-          *     See the Remarks section for more information.
-          *  biWidth
-          *     Specifies the width of the bitmap, in pixels.
-          *  biHeight
-          *     Specifies the height of the bitmap, in pixels.
-          *     If biHeight is positive, the bitmap is a bottom-up DIB and its origin is the lower left corner.
-          *     If biHeight is negative, the bitmap is a top-down DIB and its origin is the upper left corner.
-          *     If biHeight is negative, indicating a top-down DIB, biCompression must be either BI_RGB or BI_BITFIELDS. Top-down DIBs cannot
-          *     be compressed.
-          *  biPlanes
-          *     Specifies the number of planes for the target device.
-          *     This value must be set to 1.
-          *  biBitCount
-          *     Specifies the number of bits per pixel.
-          *     The biBitCount member of the BITMAPINFOHEADER structure determines the number of bits that define each pixel and the maximum
-          *     number of colors in the bitmap.
-          *     This member must be one of the following values.
-          *     Value     Description
-          *     1       The bitmap is monochrome, and the bmiColors member contains two entries.
-          *             Each bit in the bitmap array represents a pixel. The most significant bit is to the left in the image.
-          *             If the bit is clear, the pixel is displayed with the color of the first entry in the bmiColors table.
-          *             If the bit is set, the pixel has the color of the second entry in the table.
-          *     2       The bitmap has four possible color values.  The most significant half-nibble is to the left in the image.
-          *     4       The bitmap has a maximum of 16 colors, and the bmiColors member contains up to 16 entries.
-          *             Each pixel in the bitmap is represented by a 4-bit index into the color table. The most significant nibble is to the
-          *             left in the image.
-          *             For example, if the first byte in the bitmap is 0x1F, the byte represents two pixels. The first pixel contains the
-          *             color in the second table entry, and the second pixel contains the color in the sixteenth table entry.
-          *     8       The bitmap has a maximum of 256 colors, and the bmiColors member contains up to 256 entries. In this case, each byte
-          *             in the array represents a single pixel.
-          *     16      The bitmap has a maximum of 2^16 colors.
-          *             If the biCompression member of the BITMAPINFOHEADER is BI_RGB, the bmiColors member is NULL.
-          *             Each WORD in the bitmap array represents a single pixel. The relative intensities of red, green, and blue are
-          *             represented with 5 bits for each color component.
-          *             The value for blue is in the least significant 5 bits, followed by 5 bits each for green and red.
-          *             The most significant bit is not used. The bmiColors color table is used for optimizing colors used on palette-based
-          *             devices, and must contain the number of entries specified by the biClrUsed member of the BITMAPINFOHEADER.
-          *     24      The bitmap has a maximum of 2^24 colors, and the bmiColors member is NULL.
-          *             Each 3-byte triplet in the bitmap array represents the relative intensities of blue, green, and red, respectively,
-          *             for a pixel.
-          *             The bmiColors color table is used for optimizing colors used on palette-based devices, and must contain the number of
-          *             entries specified by the biClrUsed member of the BITMAPINFOHEADER.
-          *     32      The bitmap has a maximum of 2^32 colors. If the biCompression member of the BITMAPINFOHEADER is BI_RGB, the bmiColors
-          *             member is NULL. Each DWORD in the bitmap array represents the relative intensities of blue, green, and red,
-          *             respectively, for a pixel. The high byte in each DWORD is not used. The bmiColors color table is used for optimizing
-          *             colors used on palette-based devices, and must contain the number of entries specified by the biClrUsed member of the
-          *             BITMAPINFOHEADER.
-          *             If the biCompression member of the BITMAPINFOHEADER is BI_BITFIELDS, the bmiColors member contains three DWORD color
-          *             masks that specify the red, green, and blue components, respectively, of each pixel.
-          *             Each DWORD in the bitmap array represents a single pixel.
-          *  biCompression
-          *     Specifies the type of compression for a compressed bottom-up bitmap (top-down DIBs cannot be compressed). This member can be
-          *     one of the following values.
-          *     Value               Description
-          *     BI_RGB              An uncompressed format.
-          *     BI_BITFIELDS        Specifies that the bitmap is not compressed and that the color table consists of three DWORD color masks
-          *                         that specify the red, green, and blue components of each pixel.
-          *                         This is valid when used with 16- and 32-bpp bitmaps.
-          *                         This value is valid in Windows Embedded CE versions 2.0 and later.
-          *     BI_ALPHABITFIELDS   Specifies that the bitmap is not compressed and that the color table consists of four DWORD color masks
-          *                         that specify the red, green, blue, and alpha components of each pixel.
-          *                         This is valid when used with 16- and 32-bpp bitmaps.
-          *                         This value is valid in Windows CE .NET 4.0 and later.
-          *                         You can OR any of the values in the above table with BI_SRCPREROTATE to specify that the source DIB
-          *                         section has the same rotation angle as the destination.
-          *  biSizeImage
-          *     Specifies the size, in bytes, of the image. This value will be the number of bytes in each scan line which must be padded to
-          *     insure the line is a multiple of 4 bytes (it must align on a DWORD boundary) times the number of rows.
-          *     This value may be set to zero for BI_RGB bitmaps (so you cannot be sure it will be set).
-          *  biXPelsPerMeter
-          *     Specifies the horizontal resolution, in pixels per meter, of the target device for the bitmap.
-          *     An application can use this value to select a bitmap from a resource group that best matches the characteristics of the
-          *     current device.
-          *  biYPelsPerMeter
-          *     Specifies the vertical resolution, in pixels per meter, of the target device for the bitmap
-          *  biClrUsed
-          *     Specifies the number of color indexes in the color table that are actually used by the bitmap.
-          *     If this value is zero, the bitmap uses the maximum number of colors corresponding to the value of the biBitCount member for
-          *     the compression mode specified by biCompression.
-          *     If biClrUsed is nonzero and the biBitCount member is less than 16, the biClrUsed member specifies the actual number of colors
-          *     the graphics engine or device driver accesses.
-          *     If biBitCount is 16 or greater, the biClrUsed member specifies the size of the color table used to optimize performance of
-          *     the system color palettes.
-          *     If biBitCount equals 16 or 32, the optimal color palette starts immediately following the three DWORD masks.
-          *     If the bitmap is a packed bitmap (a bitmap in which the bitmap array immediately follows the BITMAPINFO header and is
-          *     referenced by a single pointer), the biClrUsed member must be either zero or the actual size of the color table.
-          *  biClrImportant
-          *     Specifies the number of color indexes required for displaying the bitmap.
-          *     If this value is zero, all colors are required.
-          *
-          *  Remarks
-          *     The BITMAPINFO structure combines the BITMAPINFOHEADER structure and a color table to provide a complete definition of the
-          *     dimensions and colors of a DIB.
-          *     An application should use the information stored in the biSize member to locate the color table in a BITMAPINFO structure, as
-          *     follows.
-          *
-          *     pColor = ((LPSTR)pBitmapInfo + (WORD)(pBitmapInfo->bmiHeader.biSize));
-          */
+/*
+ *  Read in BITMAPINFOHEADER
+ *
+ *                typedef struct tagBITMAPINFOHEADER{
+ *                        DWORD      biSize;
+ *                        LONG       biWidth;
+ *                        LONG       biHeight;
+ *                        WORD       biPlanes;
+ *                        WORD       biBitCount;
+ *                        DWORD      biCompression;
+ *                        DWORD      biSizeImage;
+ *                        LONG       biXPelsPerMeter;
+ *                        LONG       biYPelsPerMeter;
+ *                        DWORD      biClrUsed;
+ *                        DWORD      biClrImportant;
+ *                } BITMAPINFOHEADER, FAR *LPBITMAPINFOHEADER, *PBITMAPINFOHEADER;
+ *
+ *
+ *  biSize
+ *     Specifies the size of the structure, in bytes.
+ *     This size does not include the color table or the masks mentioned in the biClrUsed member.
+ *     See the Remarks section for more information.
+ *  biWidth
+ *     Specifies the width of the bitmap, in pixels.
+ *  biHeight
+ *     Specifies the height of the bitmap, in pixels.
+ *     If biHeight is positive, the bitmap is a bottom-up DIB and its origin is the lower left corner.
+ *     If biHeight is negative, the bitmap is a top-down DIB and its origin is the upper left corner.
+ *     If biHeight is negative, indicating a top-down DIB, biCompression must be either BI_RGB or BI_BITFIELDS. Top-down DIBs cannot
+ *     be compressed.
+ *  biPlanes
+ *     Specifies the number of planes for the target device.
+ *     This value must be set to 1.
+ *  biBitCount
+ *     Specifies the number of bits per pixel.
+ *     The biBitCount member of the BITMAPINFOHEADER structure determines the number of bits that define each pixel and the maximum
+ *     number of colors in the bitmap.
+ *     This member must be one of the following values.
+ *     Value     Description
+ *     1       The bitmap is monochrome, and the bmiColors member contains two entries.
+ *             Each bit in the bitmap array represents a pixel. The most significant bit is to the left in the image.
+ *             If the bit is clear, the pixel is displayed with the color of the first entry in the bmiColors table.
+ *             If the bit is set, the pixel has the color of the second entry in the table.
+ *     2       The bitmap has four possible color values.  The most significant half-nibble is to the left in the image.
+ *     4       The bitmap has a maximum of 16 colors, and the bmiColors member contains up to 16 entries.
+ *             Each pixel in the bitmap is represented by a 4-bit index into the color table. The most significant nibble is to the
+ *             left in the image.
+ *             For example, if the first byte in the bitmap is 0x1F, the byte represents two pixels. The first pixel contains the
+ *             color in the second table entry, and the second pixel contains the color in the sixteenth table entry.
+ *     8       The bitmap has a maximum of 256 colors, and the bmiColors member contains up to 256 entries. In this case, each byte
+ *             in the array represents a single pixel.
+ *     16      The bitmap has a maximum of 2^16 colors.
+ *             If the biCompression member of the BITMAPINFOHEADER is BI_RGB, the bmiColors member is NULL.
+ *             Each WORD in the bitmap array represents a single pixel. The relative intensities of red, green, and blue are
+ *             represented with 5 bits for each color component.
+ *             The value for blue is in the least significant 5 bits, followed by 5 bits each for green and red.
+ *             The most significant bit is not used. The bmiColors color table is used for optimizing colors used on palette-based
+ *             devices, and must contain the number of entries specified by the biClrUsed member of the BITMAPINFOHEADER.
+ *     24      The bitmap has a maximum of 2^24 colors, and the bmiColors member is NULL.
+ *             Each 3-byte triplet in the bitmap array represents the relative intensities of blue, green, and red, respectively,
+ *             for a pixel.
+ *             The bmiColors color table is used for optimizing colors used on palette-based devices, and must contain the number of
+ *             entries specified by the biClrUsed member of the BITMAPINFOHEADER.
+ *     32      The bitmap has a maximum of 2^32 colors. If the biCompression member of the BITMAPINFOHEADER is BI_RGB, the bmiColors
+ *             member is NULL. Each DWORD in the bitmap array represents the relative intensities of blue, green, and red,
+ *             respectively, for a pixel. The high byte in each DWORD is not used. The bmiColors color table is used for optimizing
+ *             colors used on palette-based devices, and must contain the number of entries specified by the biClrUsed member of the
+ *             BITMAPINFOHEADER.
+ *             If the biCompression member of the BITMAPINFOHEADER is BI_BITFIELDS, the bmiColors member contains three DWORD color
+ *             masks that specify the red, green, and blue components, respectively, of each pixel.
+ *             Each DWORD in the bitmap array represents a single pixel.
+ *  biCompression
+ *     Specifies the type of compression for a compressed bottom-up bitmap (top-down DIBs cannot be compressed). This member can be
+ *     one of the following values.
+ *     Value               Description
+ *     BI_RGB              An uncompressed format.
+ *     BI_BITFIELDS        Specifies that the bitmap is not compressed and that the color table consists of three DWORD color masks
+ *                         that specify the red, green, and blue components of each pixel.
+ *                         This is valid when used with 16- and 32-bpp bitmaps.
+ *                         This value is valid in Windows Embedded CE versions 2.0 and later.
+ *     BI_ALPHABITFIELDS   Specifies that the bitmap is not compressed and that the color table consists of four DWORD color masks
+ *                         that specify the red, green, blue, and alpha components of each pixel.
+ *                         This is valid when used with 16- and 32-bpp bitmaps.
+ *                         This value is valid in Windows CE .NET 4.0 and later.
+ *                         You can OR any of the values in the above table with BI_SRCPREROTATE to specify that the source DIB
+ *                         section has the same rotation angle as the destination.
+ *  biSizeImage
+ *     Specifies the size, in bytes, of the image. This value will be the number of bytes in each scan line which must be padded to
+ *     insure the line is a multiple of 4 bytes (it must align on a DWORD boundary) times the number of rows.
+ *     This value may be set to zero for BI_RGB bitmaps (so you cannot be sure it will be set).
+ *  biXPelsPerMeter
+ *     Specifies the horizontal resolution, in pixels per meter, of the target device for the bitmap.
+ *     An application can use this value to select a bitmap from a resource group that best matches the characteristics of the
+ *     current device.
+ *  biYPelsPerMeter
+ *     Specifies the vertical resolution, in pixels per meter, of the target device for the bitmap
+ *  biClrUsed
+ *     Specifies the number of color indexes in the color table that are actually used by the bitmap.
+ *     If this value is zero, the bitmap uses the maximum number of colors corresponding to the value of the biBitCount member for
+ *     the compression mode specified by biCompression.
+ *     If biClrUsed is nonzero and the biBitCount member is less than 16, the biClrUsed member specifies the actual number of colors
+ *     the graphics engine or device driver accesses.
+ *     If biBitCount is 16 or greater, the biClrUsed member specifies the size of the color table used to optimize performance of
+ *     the system color palettes.
+ *     If biBitCount equals 16 or 32, the optimal color palette starts immediately following the three DWORD masks.
+ *     If the bitmap is a packed bitmap (a bitmap in which the bitmap array immediately follows the BITMAPINFO header and is
+ *     referenced by a single pointer), the biClrUsed member must be either zero or the actual size of the color table.
+ *  biClrImportant
+ *     Specifies the number of color indexes required for displaying the bitmap.
+ *     If this value is zero, all colors are required.
+ *
+ *  Remarks
+ *     The BITMAPINFO structure combines the BITMAPINFOHEADER structure and a color table to provide a complete definition of the
+ *     dimensions and colors of a DIB.
+ *     An application should use the information stored in the biSize member to locate the color table in a BITMAPINFO structure, as
+ *     follows.
+ *
+ *     pColor = ((LPSTR)pBitmapInfo + (WORD)(pBitmapInfo->bmiHeader.biSize));
+ */
 
          // Read and convert to big endian
          bmpInfoHeader_biSize = swapInt(in.readInt());                 // DWORD
@@ -405,28 +417,29 @@ public class DibDump
          bmpInfoHeader_biClrUsed = swapInt(in.readInt());              // DWORD
          bmpInfoHeader_biClrImportant = swapInt(in.readInt());         // DWORD
 
-         /*
-          *  Since we use the height to crate arrays, it cannot have a negative a value. If the height field is
-          *  less than zero, then make it positive and set the topDownDIB flag to TRUE so we know that the image is
-          *  stored on disc upsidedown (which means it is actually rightside up).
-          */
+/*
+ *  Since we use the height to crate arrays, it cannot have a negative a value. If the height field is
+ *  less than zero, then make it positive and set the topDownDIB flag to TRUE so we know that the image is
+ *  stored on disc upsidedown (which means it is actually rightside up).
+ */
          if (bmpInfoHeader_biHeight < 0)
          {
             topDownDIB = true;
             bmpInfoHeader_biHeight = -bmpInfoHeader_biHeight;
          }
-         /*
-          * Now for the color table. For true color images, there isn't one.
-          *
-          * typedef struct tagRGBQUAD {
-          *      BYTE    rgbBlue;
-          *      BYTE    rgbGreen;
-          *      BYTE    rgbRed;
-          *      BYTE    rgbReserved;
-          *      } RGBQUAD;
-          *
-          * typedef RGBQUAD FAR* LPRGBQUAD;
-          */
+
+/*
+ * Now for the color table. For true color images, there isn't one.
+ *
+ * typedef struct tagRGBQUAD {
+ *      BYTE    rgbBlue;
+ *      BYTE    rgbGreen;
+ *      BYTE    rgbRed;
+ *      BYTE    rgbReserved;
+ *      } RGBQUAD;
+ *
+ * typedef RGBQUAD FAR* LPRGBQUAD;
+ */
 
          switch (bmpInfoHeader_biBitCount) // Determine the number of colors in the default color table
          {
@@ -446,18 +459,18 @@ public class DibDump
                numberOfColors = 0;         // no color table
          }
 
-         /*
-          * biClrUsed -  Specifies the number of color indexes in the color table that are actually used by the bitmap.
-          *     If this value is zero, the bitmap uses the maximum number of colors corresponding to the value of the biBitCount member for
-          *     the compression mode specified by biCompression.
-          *     If biClrUsed is nonzero and the biBitCount member is less than 16, the biClrUsed member specifies the actual number of colors
-          *     the graphics engine or device driver accesses.
-          *     If biBitCount is 16 or greater, the biClrUsed member specifies the size of the color table used to optimize performance of
-          *     the system color palettes.
-          *     If biBitCount equals 16 or 32, the optimal color palette starts immediately following the three DWORD masks.
-          *     If the bitmap is a packed bitmap (a bitmap in which the bitmap array immediately follows the BITMAPINFO header and is
-          *     referenced by a single pointer), the biClrUsed member must be either zero or the actual size of the color table.
-          */
+/*
+ * biClrUsed -  Specifies the number of color indexes in the color table that are actually used by the bitmap.
+ *     If this value is zero, the bitmap uses the maximum number of colors corresponding to the value of the biBitCount member for
+ *     the compression mode specified by biCompression.
+ *     If biClrUsed is nonzero and the biBitCount member is less than 16, the biClrUsed member specifies the actual number of colors
+ *     the graphics engine or device driver accesses.
+ *     If biBitCount is 16 or greater, the biClrUsed member specifies the size of the color table used to optimize performance of
+ *     the system color palettes.
+ *     If biBitCount equals 16 or 32, the optimal color palette starts immediately following the three DWORD masks.
+ *     If the bitmap is a packed bitmap (a bitmap in which the bitmap array immediately follows the BITMAPINFO header and is
+ *     referenced by a single pointer), the biClrUsed member must be either zero or the actual size of the color table.
+ */
          if (bmpInfoHeader_biClrUsed > 0) numberOfColors = bmpInfoHeader_biClrUsed;
 
          for (i = 0; i < numberOfColors; ++i)         // Read in the color table (or not if numberOfColors is zero)
@@ -473,39 +486,39 @@ public class DibDump
             colorPallet[i] = (rgbQuad_rgbRed << 16) | (rgbQuad_rgbGreen << 8) | rgbQuad_rgbBlue;
          } // for (i = 0; i < numberOfColors; ++i)
 
-         /*
-          * Now for the fun part. We need to read in the rest of the bit map, but how we interpret the values depends on the color depth.
-          *
-          * numberOfColors = 2:   Each bit is a pel, so there are 8 pels per byte. The Color Table has only two values for "black" and
-          *                       "white"
-          * numberOfColors = 4:   Each pair of bits is a pel, so there are 4 pels per byte. The Color Table has only four values
-          * numberOfColors = 16;  Each nibble (4 bits) is a pel, so there are 2 pels per byte. The Color Table has 16 entries.
-          * numberOfColors = 256; Each byte is a pel and the value maps into the 256 byte Color Table.
-          *
-          * Any other value is read in as "true" color.
-          *
-          * The BMP image is stored from bottom to top, meaning that the first scan line is the last scan line in the image.
-          *
-          * The rest is the bitmap. Use the height and width information to read it in. And as I mentioned before....
-          * In the 32-bit format, each pixel in the image is represented by a series of four bytes of RGB stored as xBRG,
-          * where the 'x' is an unused byte. For ALL image types each scan line is padded to an even 4-byte boundary.
-          *
-          */
+/*
+ * Now for the fun part. We need to read in the rest of the bit map, but how we interpret the values depends on the color depth.
+ *
+ * numberOfColors = 2:   Each bit is a pel, so there are 8 pels per byte. The Color Table has only two values for "black" and
+ *                       "white"
+ * numberOfColors = 4:   Each pair of bits is a pel, so there are 4 pels per byte. The Color Table has only four values
+ * numberOfColors = 16;  Each nibble (4 bits) is a pel, so there are 2 pels per byte. The Color Table has 16 entries.
+ * numberOfColors = 256; Each byte is a pel and the value maps into the 256 byte Color Table.
+ *
+ * Any other value is read in as "true" color.
+ *
+ * The BMP image is stored from bottom to top, meaning that the first scan line is the last scan line in the image.
+ *
+ * The rest is the bitmap. Use the height and width information to read it in. And as I mentioned before....
+ * In the 32-bit format, each pixel in the image is represented by a series of four bytes of RGB stored as xBRG,
+ * where the 'x' is an unused byte. For ALL image types each scan line is padded to an even 4-byte boundary.
+ *
+ */
 
          imageArray = new int[bmpInfoHeader_biHeight][bmpInfoHeader_biWidth]; // Create the array for the pels
-         /*
-          * I use the same loop structure for each case for clarity so you can see the similarities and differences.
-          * The outer loop is over the rows (in reverse), the inner loop over the columns.
-          */
+/*
+ * I use the same loop structure for each case for clarity so you can see the similarities and differences.
+ * The outer loop is over the rows (in reverse), the inner loop over the columns.
+ */
          switch (bmpInfoHeader_biBitCount)
          {
             case 1: // each bit is a color, so there are 8 pels per byte.  Works
-               /*
-                * Each byte read in is 8 columns, so we need to break them out. We also have to deal with the case
-                * where the image width is not an integer multiple of 8, in which case we will
-                * have bits from part of the remaining byte. Each color is 1 bit which is masked with 0x01.
-                * The screen ordering of the pels is High-Bit to Low-Bit, so the most significant element is first in the array of pels.
-                */
+/*
+ * Each byte read in is 8 columns, so we need to break them out. We also have to deal with the case
+ * where the image width is not an integer multiple of 8, in which case we will
+ * have bits from part of the remaining byte. Each color is 1 bit which is masked with 0x01.
+ * The screen ordering of the pels is High-Bit to Low-Bit, so the most significant element is first in the array of pels.
+ */
                iBytesPerRow = bmpInfoHeader_biWidth / 8;
                iTrailingBits = bmpInfoHeader_biWidth % 8;
 
@@ -548,13 +561,13 @@ public class DibDump
                }
                break;
             case 2:                         // 4 colors, Each byte is 4 pels (2 bits each),  Should work, not tested.
-               /*
-                * Each byte read in is 4 columns, so we need to break them out. We also have to deal with the case
-                * where the image width is not an integer multiple of 4, in which case we will
-                * have from 2 to 6 bits of the remaining byte. Each color is 2 bits which is masked with 0x03.
-                * The screen ordering of the pels is High-Half-Nibble to Low-Half-Nibble, so the most significant element is first in the array of
-                * pels.
-                */
+/*
+ * Each byte read in is 4 columns, so we need to break them out. We also have to deal with the case
+ * where the image width is not an integer multiple of 4, in which case we will
+ * have from 2 to 6 bits of the remaining byte. Each color is 2 bits which is masked with 0x03.
+ * The screen ordering of the pels is High-Half-Nibble to Low-Half-Nibble, so the most significant element is first in the array of
+ * pels.
+ */
                iBytesPerRow = bmpInfoHeader_biWidth / 4;
                iTrailingBits = bmpInfoHeader_biWidth % 4;                      // 0, 1, 2 or 3
 
@@ -596,13 +609,13 @@ public class DibDump
                }
                break;
             case 4:                         // 16 colors, Each byte is two pels. Works
-               /*
-                * Each byte read in is 2 columns, so we need to break them out. We also have to deal with the case
-                * where the image width is not an integer multiple of 2, in which case we will
-                * have one nibble from part of the remaining byte. We then read in the dead bytes so that each
-                * scan line is a multiple of 4 bytes. Each color is a nibble (4 bits) which is masked with 0x0F.
-                * The screen ordering of the pels is High-Nibble Low-Nibble, so the most significant element is first in the array of pels.
-                */
+/*
+ * Each byte read in is 2 columns, so we need to break them out. We also have to deal with the case
+ * where the image width is not an integer multiple of 2, in which case we will
+ * have one nibble from part of the remaining byte. We then read in the dead bytes so that each
+ * scan line is a multiple of 4 bytes. Each color is a nibble (4 bits) which is masked with 0x0F.
+ * The screen ordering of the pels is High-Nibble Low-Nibble, so the most significant element is first in the array of pels.
+ */
                iPelsPerRow = bmpInfoHeader_biWidth;
                iBytesPerRow = iPelsPerRow / 2;
                iTrailingBits = iPelsPerRow % 2;                                // Will either be 0 or 1
@@ -643,9 +656,9 @@ public class DibDump
                } // for (i = bmpInfoHeader_biHeight - 1; i >= 0; --i)
                break;
             case 8:                                                   // 1 byte, 1 pel, Works
-               /*
-                * Each byte read in is 1 column. We then read in the dead bytes so that each scan line is a multiple of 4 bytes.
-                */
+/*
+ * Each byte read in is 1 column. We then read in the dead bytes so that each scan line is a multiple of 4 bytes.
+ */
                iPelsPerRow = bmpInfoHeader_biWidth;
                iDeadBytes = (4 - iPelsPerRow % 4) % 4;
                for (int row = 0; row < bmpInfoHeader_biHeight; ++row) // read over the rows
@@ -665,10 +678,10 @@ public class DibDump
                }
                break;
             case 16: // Not likely to work (format is not internally consistent), not tested.
-               /*
-                * Each two bytes read in is 1 column. Each color is 5 bits in the 2 byte word value, so we shift 5 bits and then mask them
-                * off with 0x1F which is %11111 in binary. We then read in the dead bytes so that each scan line is a multiple of 4 bytes.
-                */
+/*
+ * Each two bytes read in is 1 column. Each color is 5 bits in the 2 byte word value, so we shift 5 bits and then mask them
+ * off with 0x1F which is %11111 in binary. We then read in the dead bytes so that each scan line is a multiple of 4 bytes.
+ */
                iPelsPerRow = bmpInfoHeader_biWidth;
                iDeadBytes = (4 - iPelsPerRow % 4) % 4;
                for (int row = 0; row < bmpInfoHeader_biHeight; ++row)   // read over the rows
@@ -691,9 +704,9 @@ public class DibDump
                } // for (i = bmpInfoHeader_biHeight - 1; i >= 0; --i)
                break;
             case 24:                                                    // Works
-               /*
-                * Each three bytes read in is 1 column. Each scan line is padded to by a multiple of 4 bytes. The disk image has only 3 however.
-                */
+/*
+ * Each three bytes read in is 1 column. Each scan line is padded to by a multiple of 4 bytes. The disk image has only 3 however.
+ */
                iPelsPerRow = bmpInfoHeader_biWidth;
                iDeadBytes = (4 - (iPelsPerRow * 3) % 4) % 4;
 
@@ -715,9 +728,9 @@ public class DibDump
                }
                break;
             case 32:                                                  // Works
-               /*
-                * Each four bytes read in is 1 column. The number of bytes per line will always be a multiple of 4, so there are no dead bytes.
-                */
+/*
+ * Each four bytes read in is 1 column. The number of bytes per line will always be a multiple of 4, so there are no dead bytes.
+ */
                iPelsPerRow = bmpInfoHeader_biWidth;
                for (int row = 0; row < bmpInfoHeader_biHeight; ++row) // read over the rows
                {
@@ -750,11 +763,14 @@ public class DibDump
 
       return imageArray;
    } // public double[] bmpToArray(String inFileName)
-   
-   public static int[][] colorImageToGrayscale(int[][] imageArray) {
+
+   public static int[][] colorImageToGrayscale(int[][] imageArray)
+   {
       int[][] grayImage = new int[imageArray.length][imageArray[0].length];
-      for (int i = 0; i < imageArray.length; i++) {
-         for (int j = 0; j < imageArray[0].length; j++) {
+      for (int i = 0; i < imageArray.length; i++)
+      {
+         for (int j = 0; j < imageArray[0].length; j++)
+         {
             grayImage[i][j] = colorToGrayscale(imageArray[i][j]);
          }
       }
